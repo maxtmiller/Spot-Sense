@@ -1,0 +1,58 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Log In
+{% endblock %}
+
+{% block main %}
+    <div style="margin-bottom: 150px;"></div>
+    <div id="regBorder">
+        <br>
+        <h1>Log In</h1>
+        <br>
+        <form action="/login" method="post">
+            <div class="mb-3">
+                <input autocomplete="off" autofocus class="form-control mx-auto w-fit" id="user" name="user" placeholder="Email / Username" type="text">
+            </div>
+            <div class="mb-3">
+                <input class="form-control mx-auto w-fit" id="password" name="password" placeholder="Password" type="password">
+            </div>
+            {% if error %}
+                <a id="badEvent">{{error}}</a>
+            {% endif %}
+            <button class="fbtn btn-primary mx-auto loginButton msgSpace" type="submit">Log In</button>
+            <div id="g_id_onload" data-client_id="434447398181-dte88c2s0pdun9rl3h5k942v6tgtj7ue.apps.googleusercontent.com" data-callback="handleCredentialResponse"></div>
+            <div class="g_id_signin" data-type="standard"></div>
+            <div class="loginSep mx-auto">
+                <hr id="line">
+                <div class="orDiv">
+                    <a class="or buttonDisabled">OR</a>
+                </div>
+                <hr id ="line">
+            </div>
+            <a class="signButton" href="/register">Sign Up</a>
+        </form>
+        <br>
+    </div>
+    <script src="https://accounts.google.com/gsi/client?lang=en" async defer></script>
+    <script>
+        function handleCredentialResponse(response) {
+          if (response.credential) {
+            var id_token = response.credential;
+            $.ajax({
+              type: 'POST',
+              url: '/google-signin',
+              data: { 'id_token': id_token },
+              beforeSend: function(xhr) {
+                  xhr.setRequestHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+              },
+              success: function (response) {
+                console.log(response);
+                window.location.href = "/"
+              }
+            });
+            console.log("signIn Success");
+          }
+        }
+      </script>
+{% endblock %}

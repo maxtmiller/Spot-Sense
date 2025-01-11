@@ -1,0 +1,44 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Register
+{% endblock %}
+
+{% block main %}
+    <div style="margin-bottom: 100px;"></div>
+    <div id="regBorder">
+        <br>
+        <h1>Sign Up</h1>
+        <br>
+        <form action="/register" method="post">
+            <div class="mb-3">
+                <input class="form-control mx-auto w-fit" id="email" name="email" placeholder="Set Email" type="email">
+            </div>
+            <div class="mb-3">
+                <input autocomplete="off" autofocus class="form-control mx-auto w-fit" id="username" name="username" placeholder="Set Username" type="text">
+            </div>
+            <div class="mb-3">
+                <input class="form-control mx-auto w-fit" id="password" name="password" placeholder="Set Password" type="password">
+            </div>
+            <div class="mb-3">
+                <input class="form-control mx-auto w-fit" id="confirmation" name="confirmation" placeholder="Confirm Password" type="password">
+            </div>
+            {% if error %}
+                <a id="badEvent">{{error}}</a>
+            {% endif %}
+            <button class="btn btn-primary loginButton msgSpace" type="submit">Register</button>
+        </form>
+        <br>
+    </div>
+    <script>
+        password.addEventListener('input', function () {
+            showConfirmation()
+        });
+
+        function showConfirmation() {
+            var confirmation = document.getElementById('confirmation');
+
+            confirmation.style.display = "block";
+        }
+    </script>
+{% endblock %}

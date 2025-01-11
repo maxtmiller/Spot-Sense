@@ -1,0 +1,31 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Home
+{% endblock %}
+
+{% block main %}
+    <div class="horizontal-stack horizontal-stack-w-menu">
+        <button class="fbtn btn-primary menu-button button-style" onclick="add()">
+            <div class="horizontal-stack-inner">
+                <svg xmlns="http://www.w3.org/2000/svg" height="16" width="16" class="menu-button-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="3">
+                    <line x1="8" y1="0" x2="8" y2="16"></line>
+                    <line x1="0" y1="8" x2="16" y2="8"></line>
+                </svg>
+                <a class="menu-button-text button-style">New</a>
+            </div>
+        </button>
+        <div class="horizontal-stack-center">
+            <h1>Dashboard</h1>
+        </div>
+        <button class="fbtn btn-primary menu-button button-style" onclick="edit()">
+            <div class="horizontal-stack-inner">
+                <i class="fas fa-edit menu-button-icon"></i>
+                <a class="menu-button-text button-style">Edit</a>
+            </div>
+        </button>
+    </div>
+    <script>
+        // js scripts
+    </script>
+{% endblock %}
