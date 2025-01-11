@@ -4,6 +4,8 @@ import json
 from iso639 import Lang
 from datetime import datetime
 
+import multiprocessing
+import warnings
 import base64
 from io import BytesIO
 import io
@@ -27,6 +29,8 @@ app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
+# multiprocessing.set_start_method('spawn')
+# warnings.filterwarnings("ignore", category=UserWarning, module="multiprocessing.resource_tracker")
 
 conn = sqlite3.connect("static/sql/database.db", check_same_thread=False)
 conn.row_factory = sqlite3.Row  # To allow dictionary-like row access
@@ -241,7 +245,7 @@ def save_image():
 def get_image_from_db(image_id):
     """Retrieve Image from Database"""
     
-    image_data = db.execute("SELECT image FROM images WHERE id=?", (image_id,)).fetchone()
+    image_data = db.execute("SELECT image FROM images WHERE id = ?", (image_id,)).fetchone()
     
     if image_data:
         return image_data[0]  # Return the image data (BLOB)
@@ -268,6 +272,7 @@ def images():
     
     # Fetch Image IDs
     images = db.execute("SELECT id FROM images WHERE user_id = ?", (user_id,)).fetchall()
+    print(images)
     
     return render_template("images.html", images=images, user=user)
 

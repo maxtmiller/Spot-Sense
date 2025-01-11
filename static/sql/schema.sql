@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 CREATE TABLE images (
-    id INTEGER PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     image BLOB,
     user_id INTEGER,
     FOREIGN KEY (user_id) REFERENCES users (id)
