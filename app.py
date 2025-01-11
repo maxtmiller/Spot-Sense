@@ -1,6 +1,5 @@
 import os.path
 import requests
-import ffmpeg
 import json
 from iso639 import Lang
 from datetime import datetime

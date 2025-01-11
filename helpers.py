@@ -4,7 +4,6 @@ import string
 import re
 import json
 
-from openai import OpenAI
 from os import path
 from iso639 import Lang
 

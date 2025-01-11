@@ -5,3 +5,4 @@ CREATE TABLE IF NOT EXISTS users (
     hash TEXT NOT NULL,
     auto_generated BOOLEAN
 );
+

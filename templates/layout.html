@@ -25,7 +25,7 @@
                         <li class="nav-item {% if request.path == '/' %}active{% endif %}" style="margin-right: 200px;"><a id="p1" class="nav-link" href="/#">Home</a></li>
                     </ul>
 
-                    <div class="profile-icon style="margin-right: 10px;" onclick="toggleMenu()">
+                    <div class="profile-icon" style="margin-right: 10px;" onclick="toggleMenu()">
                         <img src="/static/images/profile.png" alt="profile image" width="50" height="50" style="margin-top: 0px; margin-left: 0px">
                     </div>
 
@@ -36,12 +36,6 @@
                                 <h3>{{ user["username"] }}</h3>
                             </div>
                             <hr>
-
-                            <!-- <a href="/" class="sub-menu-link" style="padding-bottom: 10px;">
-                                <i class="fa-solid fa-user"></i>
-                                <p>Edit Profile</p>
-                                <span>></span>
-                            </a> -->
 
                             <a href="/settings" class="sub-menu-link" style="padding-bottom: 10px;">
                                 <i class="fa-solid fa-gear"></i>
