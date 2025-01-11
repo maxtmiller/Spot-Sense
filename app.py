@@ -113,8 +113,8 @@ def register():
         new_password = request.form.get("password")
         new_confirmation = request.form.get("confirmation")
 
-        existing_email = db.execute("SELECT * FROM users WHERE email = ?", (new_email)).fetchall()
-        existing_username = db.execute("SELECT * FROM users WHERE username = ?", (new_username)).fetchall()
+        existing_email = db.execute("SELECT * FROM users WHERE email = ?", (new_email,)).fetchall()
+        existing_username = db.execute("SELECT * FROM users WHERE username = ?", (new_username,)).fetchall()
 
         # Variable for storing error message
         error = None
@@ -162,10 +162,10 @@ def register():
         # Hashes password when before inserting into users table
         hash = generate_password_hash(new_password, method='pbkdf2', salt_length=16)
 
-        db.execute("INSERT INTO USERS (email, username, hash, auto_generated) VALUES(?, ?, ?, ?)", new_email, new_username, hash, False)
+        db.execute("INSERT INTO USERS (email, username, hash, auto_generated) VALUES(?, ?, ?, ?)", (new_email, new_username, hash, False))
         conn.commit()
 
-        rows = db.execute("SELECT * FROM users WHERE username = ?", (request.form.get("username"))).fetchall()
+        rows = db.execute("SELECT * FROM users WHERE username = ?", (request.form.get("username"),)).fetchall()
 
         session["user_id"] = rows[0]["id"]
 
@@ -302,8 +302,8 @@ def settings():
             new_password = request.form.get("new-password")
             current_password = request.form.get("current-password")
 
-        existing_usernames = db.execute("SELECT * FROM users WHERE username = ? AND NOT id = ?", new_username, user['id'])
-        existing_emails = db.execute("SELECT * FROM users WHERE email = ? AND NOT id = ?", new_email, user['id'])
+        existing_usernames = db.execute("SELECT * FROM users WHERE username = ? AND NOT id = ?", (new_username, user['id']))
+        existing_emails = db.execute("SELECT * FROM users WHERE email = ? AND NOT id = ?", (new_email, user['id']))
 
         hash = db.execute("SELECT hash FROM users WHERE id = ?", user['id'])[0]['hash']
 

@@ -26,20 +26,26 @@
             function previewImage() {
                 const fileInput = document.getElementById("imageUpload");
                 const previewContainer = document.getElementById("imagePreview");
+                previewContainer.style.display = "block";
                 const file = fileInput.files[0];
+
+                const video = document.getElementById("video");
+                video.style.display = "none";
+                const captureButton = document.getElementById("captureButton");
+                captureButton.style.display = "none";
             
                 if (file) {
-                const reader = new FileReader();
+                    const reader = new FileReader();
             
-                reader.onload = function (e) {
-                    previewContainer.innerHTML = `
-                    <img src="${e.target.result}" alt="Uploaded Image" style="max-width: 90%; max-height: 60vh;">
-                    `;
-                };
-            
-                reader.readAsDataURL(file);
+                    reader.onload = function (e) {
+                        previewContainer.innerHTML = `<img src="${e.target.result}" alt="Uploaded Image" style="max-width: 90%; max-height: 60vh;">`;
+
+                        const imageData = e.target.result;
+                        saveImageToDatabase(imageData);
+                    };
+                    reader.readAsDataURL(file);
                 } else {
-                previewContainer.innerHTML = "";
+                    previewContainer.innerHTML = "";
                 }
             }
             
@@ -47,6 +53,8 @@
                 const video = document.getElementById("video");
                 const captureButton = document.getElementById("captureButton");
                 const pos = document.getElementById("mainBody");
+                const previewContainer = document.getElementById("imagePreview");
+                previewContainer.style.display = "none";
                 pos.style.marginTop = '0vh';
             
                 navigator.mediaDevices
