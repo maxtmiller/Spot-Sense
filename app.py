@@ -4,8 +4,13 @@ import json
 from iso639 import Lang
 from datetime import datetime
 
+import base64
+from io import BytesIO
+import io
+from PIL import Image
+
 import sqlite3
-from flask import Flask, flash, redirect, render_template, session, request, jsonify
+from flask import Flask, flash, redirect, render_template, session, request, jsonify, send_file
 from flask_session import Session
 
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -187,8 +192,84 @@ def home():
     user_id = session["user_id"]
     user = db.execute("SELECT * FROM users WHERE id = ?;", (user_id,)).fetchone()
 
-
     return render_template("home.html", user=user)
+
+# Route to live camera feed
+@app.route("/camera", methods=["GET"])
+def camera():
+    """Display live camera feed page"""
+
+    user_id = session["user_id"]
+    user = db.execute("SELECT * FROM users WHERE id = ?;", (user_id,)).fetchone()
+
+    return render_template("camera.html", user=user)
+
+
+# Route to save the captured image to the database
+@app.route("/save-image", methods=["POST"])
+def save_image():
+    """Save Image to Database"""
+
+    if "user_id" not in session:
+        return jsonify({"error": "User is not logged in"}), 403
+
+    user_id = session["user_id"]
+    user = db.execute("SELECT * FROM users WHERE id = ?;", (user_id,)).fetchone()
+
+    # Get the image data from the request
+    data = request.get_json()
+    image_data = data.get("image")
+
+    if image_data:
+        # Strip the base64 prefix ('data:image/png;base64,')
+        image_data = image_data.split(',')[1]
+
+        # Convert base64 to image
+        image_bytes = base64.b64decode(image_data)
+        image = Image.open(BytesIO(image_bytes))
+
+        db.execute("INSERT INTO images (image, user_id) VALUES (?, ?)", (sqlite3.Binary(image_bytes),user_id))
+        conn.commit()
+
+        # Return success response
+        return jsonify({"message": "Image saved successfully"}), 200
+
+    return jsonify({"error": "No image data provided"}), 400
+
+
+# Assuming you have a database setup already
+def get_image_from_db(image_id):
+    """Retrieve Image from Database"""
+    
+    image_data = db.execute("SELECT image FROM images WHERE id=?", (image_id,)).fetchone()
+    
+    if image_data:
+        return image_data[0]  # Return the image data (BLOB)
+    return None
+
+
+@app.route('/view_image/<int:image_id>')
+def view_image(image_id):
+    """Fetch image data from the database"""
+
+    image_data = get_image_from_db(image_id)
+
+    if image_data:
+        return send_file(io.BytesIO(image_data), mimetype='image/png')
+    return "Image not found", 404
+
+
+@app.route("/images")
+def images():
+    """Display Images"""
+
+    user_id = session["user_id"]
+    user = db.execute("SELECT * FROM users WHERE id = ?;", (user_id,)).fetchone()
+    
+    # Fetch Image IDs
+    images = db.execute("SELECT id FROM images WHERE user_id = ?", (user_id,)).fetchall()
+    
+    return render_template("images.html", images=images, user=user)
 
 
 @app.route("/settings", methods=["GET", "POST"] )
@@ -326,7 +407,6 @@ def google_signin():
         data = json.load(file)['clientID']
         
     YOUR_CLIENT_ID = data
-    print(YOUR_CLIENT_ID)
 
     id_token_received = request.form['id_token']
 

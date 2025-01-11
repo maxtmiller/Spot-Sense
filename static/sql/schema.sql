@@ -6,3 +6,9 @@ CREATE TABLE IF NOT EXISTS users (
     auto_generated BOOLEAN
 );
 
+CREATE TABLE images (
+    id INTEGER PRIMARY KEY,
+    image BLOB,
+    user_id INTEGER,
+    FOREIGN KEY (user_id) REFERENCES users (id)
+);
