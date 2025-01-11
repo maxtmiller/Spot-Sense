@@ -5,18 +5,15 @@ import re
 import json
 
 from openai import OpenAI
-from pydub import AudioSegment
-from pydub.playback import play
 from os import path
 from iso639 import Lang
 
-from cs50 import SQL
 from functools import wraps
 from flask import redirect, session, request, current_app
 
 import os.path
+import sqlite3
 from sqlite3 import Error
-
 
 def login_required(f):
     """Decorate routes to require login"""
@@ -49,31 +46,29 @@ def before_first_request(f):
 
 # Runs SQL from file
 def run_sql(sql_file):
-    """Runs SQL Commands from SQL File"""
-
-    db = SQL("sqlite:///static/sql/database.db")
-
+    """Runs SQL Commands from a file"""
+    db_path = "./static/sql/database.db"
     try:
-        with open('./static/sql/'+sql_file, 'r') as file:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        with open('./static/sql/' + sql_file, 'r') as file:
             sql_commands = file.read().split(';')
         for command in sql_commands:
             if command.strip():
-                db.execute(command)
-    except Error as e:
-        print(e)
+                cursor.execute(command)
+        conn.commit()
+    except sqlite3.Error as e:
+        print(f"SQL error: {e}")
+    finally:
+        conn.close()
 
 # Creates SQL structures if they don't exist
 def check_for_sql(app):
-    """Runs SQL files if they have not been run before"""
-
-    db = SQL("sqlite:///static/sql/database.db")
-
+    """Ensures SQL structures exist"""
+    db_path = "./static/sql/database.db"
     if not app.config.get("BEFORE_CHECK_EXECUTED"):
-
-        run_sql('schema.sql')
-
-        return
-
+        if not os.path.exists(db_path):
+            run_sql('schema.sql')
         app.config["BEFORE_CHECK_EXECUTED"] = True
 
 # Clears local flask sessions

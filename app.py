@@ -5,8 +5,8 @@ import json
 from iso639 import Lang
 from datetime import datetime
 
-from cs50 import SQL
-from flask import Flask, flash, redirect, render_template, session, request
+import sqlite3
+from flask import Flask, flash, redirect, render_template, session, request, jsonify
 from flask_session import Session
 
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -24,8 +24,9 @@ app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
 
-db = SQL("sqlite:///static/sql/database.db")
-
+conn = sqlite3.connect("static/sql/database.db", check_same_thread=False)
+conn.row_factory = sqlite3.Row  # To allow dictionary-like row access
+db = conn.cursor()
 
 @app.after_request
 def after_request(response):
@@ -74,7 +75,7 @@ def login():
             return render_template("login.html", error=error)
 
         # Query database for username
-        rows = db.execute("SELECT * FROM users WHERE username = ? OR email = ?", request.form.get("user"), request.form.get("user"))
+        rows = db.execute("SELECT * FROM users WHERE username = ? OR email = ?", (request.form.get("user"), request.form.get("user"))).fetchall()
 
         # Ensure username exists and password is correct
         if len(rows) != 1 or not check_password_hash(rows[0]["hash"], request.form.get("password")):
@@ -104,8 +105,8 @@ def register():
         new_password = request.form.get("password")
         new_confirmation = request.form.get("confirmation")
 
-        existing_email = db.execute("SELECT * FROM users WHERE email = ?", new_email)
-        existing_username = db.execute("SELECT * FROM users WHERE username = ?", new_username)
+        existing_email = db.execute("SELECT * FROM users WHERE email = ?", (new_email)).fetchall()
+        existing_username = db.execute("SELECT * FROM users WHERE username = ?", (new_username)).fetchall()
 
         # Variable for storing error message
         error = None
@@ -154,8 +155,9 @@ def register():
         hash = generate_password_hash(new_password, method='pbkdf2', salt_length=16)
 
         db.execute("INSERT INTO USERS (email, username, hash, auto_generated) VALUES(?, ?, ?, ?)", new_email, new_username, hash, False)
+        conn.commit()
 
-        rows = db.execute("SELECT * FROM users WHERE username = ?", request.form.get("username"))
+        rows = db.execute("SELECT * FROM users WHERE username = ?", (request.form.get("username"))).fetchall()
 
         session["user_id"] = rows[0]["id"]
 
@@ -184,7 +186,7 @@ def home():
     """Main Page"""
 
     user_id = session["user_id"]
-    user = db.execute("SELECT * FROM users WHERE id = ?;", user_id)[0]
+    user = db.execute("SELECT * FROM users WHERE id = ?;", (user_id,)).fetchone()
 
 
     return render_template("home.html", user=user)
@@ -196,7 +198,7 @@ def settings():
     """Settings Page"""
 
     user_id = session["user_id"]
-    user = db.execute("SELECT * FROM users WHERE id = ?;", user_id)[0]
+    user = db.execute("SELECT * FROM users WHERE id = ?;", (user_id,)).fetchone()
 
     generated = user['auto_generated']
 
@@ -318,55 +320,57 @@ def settings():
     return render_template("settings.html",  user=user, generated=generated)
 
 
-# @app.route('/google-signin', methods=['POST'])
-# def google_signin():
+@app.route('/google-signin', methods=['POST'])
+def google_signin():
 
-#     with open('./static/cred.json', 'r') as file:
-#         data = json.load(file)['clientID']
+    with open('./static/cred.json', 'r') as file:
+        data = json.load(file)['clientID']
         
-#     YOUR_CLIENT_ID = data
+    YOUR_CLIENT_ID = data
+    print(YOUR_CLIENT_ID)
 
-#     id_token_received = request.form['id_token']
+    id_token_received = request.form['id_token']
 
-#     try:
+    try:
 
-#         idinfo = id_token.verify_oauth2_token(id_token_received, requests.Request(), YOUR_CLIENT_ID)
+        idinfo = id_token.verify_oauth2_token(id_token_received, requests.Request(), YOUR_CLIENT_ID)
 
-#         user_id = idinfo['sub']
-#         user_name = idinfo['name']
-#         user_email = idinfo['email']
+        user_id = idinfo['sub']
+        user_name = idinfo['name']
+        user_email = idinfo['email']
 
-#         email_count = db.execute("SELECT COUNT(email) FROM users WHERE email = ?;", user_email)
-#         email_count = email_count[0]["COUNT(email)"]
+        email_count = db.execute("SELECT COUNT(email) FROM users WHERE email = ?;", (user_email,)).fetchone()
+        email_count = email_count[0]
 
-#         if email_count != 1:
+        if email_count != 1:
 
-#             email = user_email
-#             username = user_name
-#             password = generate_password(12)
-#             hash = generate_password_hash(password, method='pbkdf2', salt_length=16)
+            email = user_email
+            username = user_name
+            password = generate_password(12)
+            hash = generate_password_hash(password, method='pbkdf2', salt_length=16)
 
-#             db.execute("INSERT INTO USERS (email, username, hash, auto_generated) VALUES(?, ?, ?, ?);", email, username, hash, True)
+            db.execute("INSERT INTO USERS (email, username, hash, auto_generated) VALUES(?, ?, ?, ?);", (email, username, hash, True))
+            conn.commit()
 
-#             rows = db.execute("SELECT * FROM users WHERE email = ?", email)
+            rows = db.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchall()
 
-#             print("rows - ", rows)
+            print("rows - ", rows)
 
-#             session["user_id"] = rows[0]["id"]
+            session["user_id"] = rows[0]["id"]
 
-#         else:
+        else:
 
-#             email = user_email
+            email = user_email
 
-#             rows = db.execute("SELECT * FROM users WHERE email = ?;", email)
+            rows = db.execute("SELECT * FROM users WHERE email = ?;", (email,)).fetchall()
 
-#             session["user_id"] = rows[0]["id"]
+            session["user_id"] = rows[0]["id"]
 
-#         return jsonify(success=True)
+        return jsonify(success=True)
 
-#     except ValueError:
-#         print('Invalid token')
-#         return jsonify(success=False, error='Invalid token')
+    except ValueError:
+        print('Invalid token')
+        return jsonify(success=False, error='Invalid token')
 
 
 if __name__ == "__main__":
