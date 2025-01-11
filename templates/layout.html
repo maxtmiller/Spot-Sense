@@ -17,9 +17,9 @@
         <title>DeltaHacks Project: {% block title %}{% endblock %}</title>
     </head>
     <body>
-        <nav class="bg-light border navbar navbar-expand-md navbar-light navPos">
+        <nav class="bg-light border navbar navbar-expand-md navbar-light navPos" style="position:fixed;width:100%;">
             <div class="container-fluid">
-                <a class="horizontal-stack buttonDisabled" href="/" style="margin-left: 10px">
+                <a class="horizontal-stack buttonDisabled" href="/" style="margin-left:10px;">
                     <img src="/static/images/logo.png" alt="website logo" width="50" height="50" id="FooterLogo" class="d-inline-block align-text-top" style="border-radius: 50%;">
                     <div style="margin-right: 10px;"></div>
                     <h1 class="navbar-brand" href="/" style="margin-left: 5px;">Project Name</h1>
@@ -68,12 +68,12 @@
                 {% endif %}
             </div>
         </nav>
-        <main class="container-fluid container-padding text-center">
+        <main class="container-fluid container-padding text-center" style="padding-top:9vh;">
             {% block main %}{% endblock %}
         </main>
         {% if get_flashed_messages() %}
             <div class="horizontal-stack-flash" style="margin-top: -10px; width: 100%;">
-                <div class="alert alert-primary mb-0 text-center horizontal-stack-center" role="alert" style="width: 90%; margin-left: 5%;">
+                <div class="alert alert-primary mb-0 text-center horizontal-stack-center" role="alert" style="width: 100%;bottom: 0;position:fixed;">
                     {{ get_flashed_messages() | join(" ") }}
                 </div>
             </div>

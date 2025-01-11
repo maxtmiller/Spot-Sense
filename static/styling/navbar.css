@@ -29,7 +29,7 @@
     text-align: center;
     -webkit-background-clip: text;
     background-clip: text;
-    background-image: linear-gradient(to right, #0bbd29, #0bbd29 80%, #fff 20%);
+    background-image: linear-gradient(to right, #af1c1c, #af1c1c 80%, #fff 20%);
     background-size: 200% 100%;
     background-position: -100%;
     transition: all 0.3s ease-in-out;
@@ -47,7 +47,7 @@
     bottom: -3px;
     z-index: 0;
     position: absolute;
-    background: #0bbd29;
+    background: #af1c1c;
     transition: all 0.3s ease-in-out;
 }
 .nav a:hover {
@@ -67,7 +67,7 @@
     bottom: -3px;
     left: 0;
     position: absolute;
-    background: #0bbd29;
+    background: #af1c1c;
     transition: all 0.3s ease-in-out;
 }
 .nav .nav-item a.nav-link:hover:before {
@@ -75,13 +75,13 @@
 }
 .nav .nav-item.active a.nav-link:before {
     width: 100%;
-    background: #0bbd29;
+    background: #af1c1c;
 }
 
 
 .logIn {
-    color: #0bbd29;
-    border: 3px solid #0bbd29;
+    color: #af1c1c;
+    border: 3px solid #af1c1c;
     background-color : transparent;
     box-shadow: rgba(100, 100, 110, 0.4) 0px 7px 29px 0px;
     border-radius: 10px;
@@ -103,14 +103,14 @@
     width: 50px;
     height: 50px;
     border: 0px solid black;
-    background: #0bbd29;
+    background: #af1c1c;
 }
 .profile-icon:hover {
     border-radius: 30px;
     width: 50px;
     height: 50px;
     border: 0px solid black;
-    background: #0ea126;
+    background: #af1c1c;
 }
 
 .sub-menu-wrap {

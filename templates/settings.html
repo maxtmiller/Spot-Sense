@@ -1,0 +1,117 @@
+{% extends "layout.html" %}
+
+{% block title %}
+   Settings
+{% endblock %}
+
+{% block main %}
+    <h1>Settings</h1>
+    <br>
+    <form action="/settings" method="post" class="centered" style="width: 80%;">
+        <div class="w-fit horizontal-stack centered" style="width: 90%; padding-bottom: 50px;">
+            <h2 id="emailTitle" style="display: none; width: 25%; left: 0; text-align: left!important;">Email: </h2>
+            <input autocomplete="off" autofocus disabled class="form-control mx-auto" id="email" name="email" value="{{ user['email'] }}" type="text">
+            <button class="fbtn btn-primary loginButton" type="button" onclick="edit('email')" style="margin-left: 20px; width: 10%;">
+                <div class="horizontal-stack-inner-edit">
+                    <i class="fas fa-edit edit-icon edit-button" style="width: 25px; height: 25px;"></i>
+                    <a class="edit-text button-style buttonDisabled">Edit</a>
+                </div>
+            </button>
+        </div>
+        <div class="w-fit horizontal-stack centered" style="width: 90%; padding-bottom: 50px;">
+            <h2 id="usernameTitle" style="display: none; width: 25%; text-align: left!important;">Username: </h2>
+            <input autocomplete="off" autofocus disabled class="form-control mx-auto" id="username" name="username" value="{{ user['username'] }}" type="text">
+            <button class="fbtn btn-primary loginButton" type="button" onclick="edit('username')" style="margin-left: 20px; width: 10%;">
+                <div class="horizontal-stack-inner-edit">
+                    <i class="fas fa-edit edit-icon edit-button" style="width: 25px; height: 25px;"></i>
+                    <a class="edit-text button-style buttonDisabled">Edit</a>
+                </div>
+            </button>
+        </div>
+        {% if generated %}
+            <div class="w-fit horizontal-stack centered" style="width: 90%; padding-bottom: 15px;">
+                <h2 id="passwordTitle" style="display: none; width: 25%; text-align: left!important;">Password: </h2>
+                <input autocomplete="off" autofocus class="form-control mx-auto" id="set-password" name="set-password" placeholder="Set Password" type="password">
+                <button class="fbtn btn-primary loginButton" type="button" onclick="show('set-password')" style="margin-left: 20px; width: 10%;">
+                    <div class="horizontal-stack-inner-edit">
+                        <i class="fa-solid fa-eye edit-icon edit-button" style="width: 25px; height: 25px;"></i>
+                        <a class="edit-text button-style buttonDisabled">Show</a>
+                    </div>
+                </button>
+            </div>
+        {% else %}
+            <div class="w-fit horizontal-stack centered" style="width: 90%; padding-bottom: 15px;">
+                <h2 id="passwordTitle" style="display: none; width: 25%; text-align: left!important;">Password: </h2>
+                <input autocomplete="off" autofocus class="form-control mx-auto" id="current-password" name="current-password" placeholder="Current Password" type="password">
+                <button class="fbtn btn-primary loginButton" type="button" onclick="editPassword()" style="margin-left: 20px; width: 10%;">
+                    <div class="horizontal-stack-inner-edit">
+                        <i class="fas fa-edit edit-icon edit-button" style="width: 25px; height: 25px;"></i>
+                        <a class="edit-text button-style buttonDisabled">Edit</a>
+                    </div>
+                </button>
+            </div>
+            <div class="w-fit horizontal-stack centered" id="change-password" style="width: 90%; padding-bottom: 15px;">
+                <h2 id="passwordNewTitle" style="display: none; width: 25%; text-align: left!important;"> </h2>
+                <input autocomplete="off" autofocus class="form-control mx-auto" id="new-password" name="new-password" placeholder="New Password" type="password">
+                <button class="btn-primary loginButton" type="button" onclick="show('new-password')" style="margin-left: 20px; width: 10%; min-width: 75px;">
+                    <div class="horizontal-stack-inner-edit">
+                        <i class="fa-solid fa-eye edit-icon edit-button" style="width: 25px; height: 25px;"></i>
+                        <a class="edit-text button-style buttonDisabled">Show</a>
+                    </div>
+                </button>
+            </div>
+            <input id="display" name="display" type="text" value="flex" style="display: none;">
+        {% endif %}
+        {% if error %}
+            <a id="badEvent" style="padding: 0 50px;">{{error}}</a>
+        {% endif %}
+        {% if success %}
+            <br>
+            <a id="goodEvent" style="padding: 0 50px;">{{success}}</a>
+        {% endif %}
+        <button class="fbtn btn-primary mx-auto settingsButton msgSpace centered" type="submit" onclick="showAll()">Save</button>
+    </form>
+    <script>
+        var w = window.innerWidth;
+        var h = window.innerHeight;
+        var emailTitle = document.getElementById("emailTitle");
+        var usernameTitle = document.getElementById("usernameTitle");
+        var passwordTitle = document.getElementById("passwordTitle");
+        var passwordNewTitle = document.getElementById("passwordNewTitle");
+        if (w > 1300) {
+            emailTitle.style.display = 'flex'
+            usernameTitle.style.display = 'flex'
+            passwordTitle.style.display = 'flex'
+            passwordNewTitle.style.display = 'flex'
+        }
+        function show(input) {
+            var element = document.getElementById(input);
+            element.type = (element.type === "text") ? "password" : "text";
+        }
+
+        function showAll() {
+            document.getElementById("username").disabled = false;
+            document.getElementById("email").disabled = false;
+
+            var extraElement = document.getElementById('change-password')
+            var extraElementValue = window.getComputedStyle(extraElement).getPropertyValue('display');
+
+            console.log("extraElementValue", extraElementValue)
+
+            var displayElement = document.getElementById('display')
+            displayElement.value = extraElementValue
+
+            console.log("displayElementValue", displayElement.value)
+        }
+
+        function edit(input) {
+            var element = document.getElementById(input);
+            element.disabled = !element.disabled;
+        }
+
+        function editPassword() {
+            var confirmation = document.getElementById('change-password');
+            confirmation.style.display = (confirmation.style.display === "none") ? "flex" : "none";
+        }
+    </script>
+{% endblock %}

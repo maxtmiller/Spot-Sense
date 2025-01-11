@@ -12,7 +12,7 @@ import io
 from PIL import Image
 
 import sqlite3
-from flask import Flask, flash, redirect, render_template, session, request, jsonify, send_file
+from flask import Flask, flash, redirect, render_template, session, request, jsonify, send_file, g
 from flask_session import Session
 
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -29,12 +29,14 @@ app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
-# multiprocessing.set_start_method('spawn')
-# warnings.filterwarnings("ignore", category=UserWarning, module="multiprocessing.resource_tracker")
 
-conn = sqlite3.connect("static/sql/database.db", check_same_thread=False)
-conn.row_factory = sqlite3.Row  # To allow dictionary-like row access
-db = conn.cursor()
+def get_db_connection():
+    """Create and return a new database connection."""
+    conn = sqlite3.connect("static/sql/database.db", check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+
+    return conn
+
 
 @app.after_request
 def after_request(response):
@@ -66,6 +68,9 @@ def login():
     # Clear any user_id
     session.clear()
 
+    conn = get_db_connection()
+    db = conn.cursor()
+
     # User reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
 
@@ -75,11 +80,13 @@ def login():
         # Ensure username was submitted
         if not request.form.get("user"):
             error = "Must provide email or username!"
+            conn.close()
             return render_template("login.html", error=error)
 
         # Ensure password was submitted
         elif not request.form.get("password"):
             error = "Must provide password!"
+            conn.close()
             return render_template("login.html", error=error)
 
         # Query database for username
@@ -88,6 +95,7 @@ def login():
         # Ensure username exists and password is correct
         if len(rows) != 1 or not check_password_hash(rows[0]["hash"], request.form.get("password")):
             error = "Invalid username and/or password!"
+            conn.close()
             return render_template("login.html", error=error)
 
         # Remember which user has logged in
@@ -95,16 +103,21 @@ def login():
 
         # Redirect user to home page
         print("success")
+        conn.close()
         return redirect("/")
 
     # User reached route via GET (as by clicking a link or via redirect)
     else:
+        conn.close()
         return render_template("login.html")
 
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
     """Register user"""
+
+    conn = get_db_connection()
+    db = conn.cursor()
 
     if request.method == "POST":
 
@@ -122,41 +135,49 @@ def register():
         # Ensure email was submitted
         if not new_email:
             error = "Must provide email!"
+            conn.close()
             return render_template("register.html", error=error)
         
         # Ensure email is not already registered to an account
         elif len(existing_email) != 0:
             error = "Account already exists with specified email!"
+            conn.close()
             return render_template("register.html", error=error)
         
         # Ensure follows the correct format
         elif valid_email(new_email) == False:
             error = "Invalid email provided!"
+            conn.close()
             return render_template("register.html", error=error)
 
         # Ensure username is provided
         elif not new_username:
             error = "Must provide username!"
+            conn.close()
             return render_template("register.html", error=error)
 
         # Ensure username is unique
         elif len(existing_username) != 0:
             error = "Username not available!"
+            conn.close()
             return render_template("register.html", error=error)
 
         # Ensure password was submitted
         elif not new_password:
             error = "Missing password!"
+            conn.close()
             return render_template("register.html", error=error)
 
         # Ensure passwords match
         elif new_password != new_confirmation:
             error = "Passwords don't match!"
+            conn.close()
             return render_template("register.html", error=error)
 
         # Ensure password is between 4 and 15 characters
         elif len(new_password) < 4 or len(new_password) > 15:
             error = "Password must be between 4 and 15 characters long!"
+            conn.close()
             return render_template("register.html", error=error)
 
         # Hashes password when before inserting into users table
@@ -170,10 +191,11 @@ def register():
         session["user_id"] = rows[0]["id"]
 
         flash("Registered!")
+        conn.close()
         return redirect("/")
 
     else:
-
+        conn.close()
         return render_template("register.html")
 
 
@@ -193,20 +215,14 @@ def logout():
 def home():
     """Main Page"""
 
+    conn = get_db_connection()
+    db = conn.cursor()
+
     user_id = session["user_id"]
     user = db.execute("SELECT * FROM users WHERE id = ?;", (user_id,)).fetchone()
 
+    conn.close()
     return render_template("home.html", user=user)
-
-# Route to live camera feed
-@app.route("/camera", methods=["GET"])
-def camera():
-    """Display live camera feed page"""
-
-    user_id = session["user_id"]
-    user = db.execute("SELECT * FROM users WHERE id = ?;", (user_id,)).fetchone()
-
-    return render_template("camera.html", user=user)
 
 
 # Route to save the captured image to the database
@@ -214,7 +230,11 @@ def camera():
 def save_image():
     """Save Image to Database"""
 
+    conn = get_db_connection()
+    db = conn.cursor()
+
     if "user_id" not in session:
+        conn.close()
         return jsonify({"error": "User is not logged in"}), 403
 
     user_id = session["user_id"]
@@ -235,20 +255,26 @@ def save_image():
         db.execute("INSERT INTO images (image, user_id) VALUES (?, ?)", (sqlite3.Binary(image_bytes),user_id))
         conn.commit()
 
-        # Return success response
+        conn.close()
         return jsonify({"message": "Image saved successfully"}), 200
-
+    
+    conn.close()
     return jsonify({"error": "No image data provided"}), 400
 
 
 # Assuming you have a database setup already
 def get_image_from_db(image_id):
     """Retrieve Image from Database"""
+
+    conn = get_db_connection()
+    db = conn.cursor()
     
     image_data = db.execute("SELECT image FROM images WHERE id = ?", (image_id,)).fetchone()
     
     if image_data:
+        conn.close()
         return image_data[0]  # Return the image data (BLOB)
+    conn.close()
     return None
 
 
@@ -256,16 +282,24 @@ def get_image_from_db(image_id):
 def view_image(image_id):
     """Fetch image data from the database"""
 
+    conn = get_db_connection()
+    db = conn.cursor()
+
     image_data = get_image_from_db(image_id)
 
     if image_data:
+        conn.close()
         return send_file(io.BytesIO(image_data), mimetype='image/png')
+    conn.close()
     return "Image not found", 404
 
 
 @app.route("/images")
 def images():
     """Display Images"""
+
+    conn = get_db_connection()
+    db = conn.cursor()
 
     user_id = session["user_id"]
     user = db.execute("SELECT * FROM users WHERE id = ?;", (user_id,)).fetchone()
@@ -274,6 +308,8 @@ def images():
     images = db.execute("SELECT id FROM images WHERE user_id = ?", (user_id,)).fetchall()
     print(images)
     
+    conn.close()
+
     return render_template("images.html", images=images, user=user)
 
 
@@ -281,6 +317,9 @@ def images():
 @login_required
 def settings():
     """Settings Page"""
+
+    conn = get_db_connection()
+    db = conn.cursor()
 
     user_id = session["user_id"]
     user = db.execute("SELECT * FROM users WHERE id = ?;", (user_id,)).fetchone()
@@ -309,34 +348,41 @@ def settings():
 
         if not new_username or not new_email:
             error = "Must fill all fields!"
+            conn.close()
             return render_template("settings.html",  user=user, error=error)
         
         elif len(existing_usernames) != 0:
             error = "Username already taken!"
+            conn.close()
             return render_template("settings.html",  user=user, error=error)
 
         elif len(existing_emails) != 0:
             error = "Account already exists for specified email!"
+            conn.close()
             return render_template("settings.html",  user=user, error=error)
 
         elif valid_email(new_email) == False:
             error = "Invalid email provided!"
+            conn.close()
             return render_template("settings.html",  user=user, error=error)
 
         elif generated:
 
             if len(set_password) < 4 or len(set_password) > 15:
                 error = "Password must be between 4 and 15 characters long!"
+                conn.close()
                 return render_template("settings.html",  user=user, error=error)
 
         elif not generated:
 
             if not current_password:
                 error = "Current password not provided!"
+                conn.close()
                 return render_template("settings.html",  user=user, error=error)
             
             elif not check_password_hash(hash, current_password):
                 error = "Current password incorrect!"
+                conn.close()
                 return render_template("settings.html",  user=user, error=error)
 
             elif display == "flex":
@@ -344,14 +390,17 @@ def settings():
                 if new_username == user['username'] and new_email == user['email'] and check_password_hash(hash, current_password) and (not new_password or new_password == current_password):
                     error = "Account Details have not changed!"
                     print("all")
+                    conn.close()
                     return render_template("settings.html",  user=user, error=error)
                 
                 elif not new_password:
                     error = "New password not set!"
+                    conn.close()
                     return render_template("settings.html",  user=user, error=error)
                 
                 elif len(new_password) < 4 or len(new_password) > 15:
                     error = "New password must be between 4 and 15 characters long!"
+                    conn.close()
                     return render_template("settings.html",  user=user, error=error)
 
         if generated:
@@ -359,11 +408,13 @@ def settings():
             if new_username == user['username'] and new_email != user['email']:
                 db.execute("UPDATE users SET email = ? WHERE id = ?;", new_email, user['id'])
                 success = "Email succesfully updated!"
+                conn.close()
                 return render_template("settings.html",  user=user, success=success)
             
             elif new_username != user['username'] and new_email == user['email']:
                 db.execute("UPDATE users SET username = ? WHERE id = ?;", new_username, user['id'])
                 success = "Username succesfully updated!"
+                conn.close()
                 return render_template("settings.html",  user=user, success=success)
             
             else:
@@ -371,6 +422,7 @@ def settings():
                 db.execute("UPDATE users SET hash = ?;", hash)
                 db.execute("UPDATE users SET auto_generated = ?;", False)
                 success = "Password succesfully set!"
+                conn.close()
                 return render_template("settings.html",  user=user, success=success)
 
         elif not generated:
@@ -378,31 +430,53 @@ def settings():
             if new_username == user['username'] and new_email != user['email'] and check_password_hash(hash, current_password) and display == "none":
                 db.execute("UPDATE users SET email = ? WHERE id = ?;", new_email, user['id'])
                 success = "Email succesfully updated!"
+                conn.close()
                 return render_template("settings.html",  user=user, success=success)
             
             elif new_username != user['username'] and new_email == user['email'] and check_password_hash(hash, current_password) and display == "none":
                 db.execute("UPDATE users SET username = ? WHERE id = ?;", new_username, user['id'])
                 success = "Username succesfully updated!"
+                conn.close()
                 return render_template("settings.html",  user=user, success=success)
             
             elif new_username != user['username'] and new_email != user['email'] and check_password_hash(hash, current_password) and display == "none":
                 db.execute("UPDATE users SET username = ?, email = ? WHERE id = ?;", new_username, new_email, user['id'])
                 success = "Email & Username succesfully updated!"
+                conn.close()
                 return render_template("settings.html",  user=user, success=success)
             
             elif new_username == user['username'] and new_email == user['email'] and new_password != current_password and check_password_hash(hash, current_password) and new_password and display == "flex":
                 hash = generate_password_hash(new_password, method='pbkdf2', salt_length=16)
                 db.execute("UPDATE users SET hash = ?;", hash)
                 success = "Password succesfully updated!"
+                conn.close()
                 return render_template("settings.html",  user=user, success=success)
             
             else:
                 error = "Password must be updated alone!"
+                conn.close()
                 return render_template("settings.html",  user=user, error=error)
 
+        conn.close()
         return render_template("settings.html",  user=user)
 
+    conn.close()
     return render_template("settings.html",  user=user, generated=generated)
+
+
+@app.route("/about")
+@login_required
+def about():
+    """About Page"""
+
+    conn = get_db_connection()
+    db = conn.cursor()
+
+    user_id = session["user_id"]
+    user = db.execute("SELECT * FROM users WHERE id = ?;", (user_id,)).fetchone()
+
+    conn.close()
+    return render_template("about.html",  user=user)
 
 
 @app.route('/google-signin', methods=['POST'])
@@ -414,6 +488,9 @@ def google_signin():
     YOUR_CLIENT_ID = data
 
     id_token_received = request.form['id_token']
+
+    conn = get_db_connection()
+    db = conn.cursor()
 
     try:
 
@@ -450,10 +527,12 @@ def google_signin():
 
             session["user_id"] = rows[0]["id"]
 
+        conn.close()
         return jsonify(success=True)
 
     except ValueError:
         print('Invalid token')
+        conn.close()
         return jsonify(success=False, error='Invalid token')
 
 

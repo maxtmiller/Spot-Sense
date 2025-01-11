@@ -167,22 +167,22 @@ nav {
 }
 
 
-.btn-primary {
+.btn-secondary {
     background-color: #0bbd29;
     border-color: #0bbd29;
 }
 
-.btn-primary:hover {
+.btn-sedondary:hover {
     background-color: #129a29;
     border-color: #129a29;
 }
 
-.btn-secondary {
+.btn-primary {
     background-color: #f33a33;
     border-color: #f33a33;
 }
 
-.btn-secondary:hover {
+.btn-primary:hover {
     background-color: #bc2520;
     border-color: #bc2520;
 }
