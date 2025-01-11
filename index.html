@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Health Analyzer</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Sour+Gummy:ital,wght@0,100..900;1,100..900&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <header>
+      <h1>Health Analyzer</h1>
+      <h2>Upload an image for analysis</h2>
+    </header>
+
+    <div class="upload-container">
+      <label class="custom-file-upload">
+        <input
+          type="file"
+          id="imageUpload"
+          accept="image/*"
+          onchange="previewImage()"
+        />
+        Choose Image
+      </label>
+      <button class="custom-file-upload" onclick="openCamera()">
+        Take Photo
+      </button>
+      <div class="preview" id="imagePreview"></div>
+      <video id="cameraFeed" autoplay></video>
+      <button
+        id="captureButton"
+        class="custom-file-upload"
+        onclick="capturePhoto()"
+        style="display: none"
+      >
+        Capture
+      </button>
+    </div>
+    <canvas id="canvas" style="display: none"></canvas>
+    <script src="script.js"></script>
+  </body>
+</html>
