@@ -41,13 +41,13 @@
 .signButton {
     margin-bottom: 5px;
     Text-Decoration: None !important;
-    color: #0bbd29;
+    color: #dc3b3b;
 }
 
 .signButton:hover {
     margin-bottom: 5px;
     Text-Decoration: None !important;
-    color: #0bbd29;
+    color: #af1c1c;
 }
 
 #line {
@@ -202,11 +202,11 @@ nav {
 }
 
 .form-control {
-    box-shadow: 0 0 0px rgba(11, 189, 41, 0.5);
+    box-shadow: 0 0 0px rgba(189, 11, 11, 0.5);
     transition: border-color .3s ease-in-out, box-shadow .3s ease-in-out;
     &:focus {
-        border-color: #0bbd29;
-        box-shadow: 0 0 7.5px rgba(11, 189, 41, 0.5);
+        border-color: #af1c1c;
+        box-shadow: 0 0 7.5px rgba(189, 11, 11, 0.5);
     }
 }
 
