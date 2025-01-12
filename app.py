@@ -280,7 +280,7 @@ def help():
 
 @app.route("/map")
 @login_required
-def nearby_hospitals():
+def map():
     """Logic for finding nearby hospitals"""
 
     conn = get_db_connection()
@@ -309,13 +309,11 @@ def chatbot():
 
 @app.route("/chatbot/message", methods=["POST"])
 def chatbot_message():
-    # Get the user's message from the frontend
+
     user_message = request.json["message"]
 
-    # Call the cohere_chat function to get the response
     bot_response = cohere_chat(user_message)
 
-    # Return the response as JSON
     return jsonify({"response": bot_response})
 
 
@@ -329,7 +327,7 @@ def get_image_from_db(image_id):
     
     if image_data:
         conn.close()
-        return image_data[0]  # Return the image data (BLOB)
+        return image_data[0]
     conn.close()
     return None
 

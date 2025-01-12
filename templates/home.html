@@ -76,23 +76,16 @@
             }
             
             function captureImage() {
-                // Get the video and canvas elements
                 const videoElement = document.getElementById('video');
                 const canvas = document.getElementById('canvas');
                 const context = canvas.getContext('2d');
-
-                // Set canvas size to match the video
                 canvas.width = videoElement.videoWidth;
                 canvas.height = videoElement.videoHeight;
 
-                // Draw the current video frame to the canvas
                 context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
 
-                // Get the image data from the canvas
-                const imageData = canvas.toDataURL('image/png'); // Base64-encoded PNG
+                const imageData = canvas.toDataURL('image/png');
 
-                // Send the image data to the server for saving
-                // saveImageToDatabase(imageData);
                 classify(imageData);
             }
 
@@ -115,33 +108,12 @@
                     }
                 })
                 .then(data => {
-                    // alert('Image sent successfully');
                     console.log(data);
                 })
                 .catch(error => {
                     console.error('Error saving image:', error);
-                    // alert('Error saving image');
                 });
             }
-
-            // function saveImageToDatabase(imageData) {
-            //     fetch('/save-image', {
-            //         method: 'POST',
-            //         headers: {
-            //             'Content-Type': 'application/json',
-            //         },
-            //         body: JSON.stringify({ image: imageData })
-            //     })
-            //     .then(response => response.json())
-            //     .then(data => {
-            //         // alert('Image saved successfully');
-            //         console.log(data);
-            //     })
-            //     .catch(error => {
-            //         console.error('Error saving image:', error);
-            //         // alert('Error saving image');
-            //     });
-            // }
         </script>
     </div>
 {% endblock %}

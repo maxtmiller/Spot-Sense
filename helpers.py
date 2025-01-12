@@ -117,7 +117,7 @@ def cohere_chat(user_message):
         You are a medical professional providing advice to someone who might have skin cancer.
 
         ## Style Guide
-        Try to speak as factual as possible, do not scare the patient. Be professional and empathetic. Try to be as concise as possible while giving all necessary info."""
+        Respond in short, clear, and concise sentences. Provide only the necessary information and avoid over-explaining."""
 
         # Construct the list of messages
         messages = [
@@ -132,7 +132,7 @@ def cohere_chat(user_message):
         assistant_message = response.message.content[0].text
         messages.append({"role": "assistant", "content": assistant_message})
 
-        print(assistant_message)  # Log the response (optional)
+        # print(assistant_message)  # Log the response (optional)
 
         return assistant_message
     except Exception as e:
