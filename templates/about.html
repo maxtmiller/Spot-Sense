@@ -1,22 +1,63 @@
-{% extends "layout.html" %}
-
-{% block title %}
-   About
-{% endblock %}
-
-{% block main %}
-    <h1>About</h1>
-    <br>
-    <div class="mx-auto" style="border:1px solid black; width: 83em; max-width: 83em;background: white;">
-        <h3 style="padding-top: 10px;">Solution</h3>
-        <p class="text-line" style="padding-left: 20px; padding-right: 20px;">Add Info...</p>    
-    </div>
-    <br>
-    <div class="horizontal-stack-inner-about mx-auto" style="background: white;width:78.8%;">
-        <img src="/static/images/background.jpg" alt="sample user" width="600px" height="600px">
-        <div style="padding-left: 50px;">
-            <h3 style="margin-bottom: 30px;">Problem Statement</h3>
-            <p class="text-block">Add Info...</p>    
-        </div>
-    </div>
-{% endblock %}
+{% extends "layout.html" %} {% block title %} About {% endblock %} {% block main
+    %}
+    <style>
+        body {
+          margin: 0;
+          padding: 0;
+          font-family: Arial, sans-serif;
+          background-color: #f9f9f9;
+          color: #333;
+        }
+        
+        /* Container to center content */
+        .container {
+          max-width: 600px;
+          margin: 50px auto;
+          background-color: #fff;
+          padding: 20px;
+          border-radius: 8px;
+          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        p {
+          font-size: 1rem;
+          line-height: 1.5;
+          margin-bottom: 1rem;
+        }
+        
+    
+        ol {
+          margin: 1rem 0 1rem 2rem;
+        }
+        
+        li {
+          margin: 0.5rem 0;
+        }
+        
+    
+        h1 {
+          margin-top: 0; 
+          font-size: 2.5rem;
+          text-align: center;
+          margin-bottom: 1rem;
+        }
+      </style>
+    </head>
+    <body>
+    
+      <div class="container">
+        <h1>Features</h1>
+        <p>
+          Our web app leverages advanced technologies to detect and manage skin cancer, offering the following features:
+        </p>
+        <ol>
+          <li>User image uploads or webcam captures analyzed by a TensorFlow model to predict malignancy or benign status with a confidence score</li>
+          <li>SQL database storage for reviewed images</li>
+          <li>A “Help” section using the Google Maps API to locate nearby hospitals</li>
+          <li>A Cohere-powered chatbot that answers skin disease questions</li>
+          <li>Secure authentication via Google OAuth, ensuring a smooth user experience</li>
+        </ol>
+      </div>
+    
+    </body>
+    {% endblock %}
