@@ -1,17 +1,21 @@
+/* Container for the image gallery */
 .image-gallery {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 16px;
-    padding: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* Larger minimum column width (300px) */
+    gap: 20px; /* Increase space between images */
+    padding: 20px; /* Add padding around the gallery */
 }
 
+/* Each image item */
 .image-item {
-    text-align: center;
+    border: 1px solid #ddd; /* Border around images */
+    overflow: hidden; /* Prevent overflow if the image is larger than the container */
+    border-radius: 8px; /* Optional: rounded corners */
 }
 
+/* Forcing image into landscape dimensions */
 .image-item img {
     width: 100%;
-    height: auto;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    height: 300px; /* Increase height to make images larger */
+    object-fit: cover; /* Ensures the image fills the area and is cropped as needed */
 }

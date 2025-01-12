@@ -10,5 +10,6 @@ CREATE TABLE images (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     image BLOB,
     user_id INTEGER,
+    classification TEXT,
     FOREIGN KEY (user_id) REFERENCES users (id)
 );
