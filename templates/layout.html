@@ -28,7 +28,7 @@
                 {% if session["user_id"] %}
                     <ul class="nav navbar-nav" id="navTitle" style="display: none;">
                         <li class="nav-item {% if request.path == '/' %}active{% endif %}" style="margin-right: 200px;"><a id="p1" class="nav-link" href="/#">Home</a></li>
-                        <li class="nav-item {% if request.path == '/images' %}active{% endif %}" style="margin-right: 200px;"><a id="p1" class="nav-link" href="/images">Images</a></li>
+                        <li class="nav-item {% if request.path == '/images' %}active{% endif %}" style="margin-right: 200px;"><a id="p1" class="nav-link" href="/images">History</a></li>
                     </ul>
 
                     <div class="profile-icon" style="margin-right: 10px;" onclick="toggleMenu()">
@@ -63,9 +63,6 @@
                         </div>
                     </div>
                 {% else %}
-                    <a class="nav-log" href="/login">
-                        <button class="logIn">Log In</button>
-                    </a>
                 {% endif %}
             </div>
         </nav>
