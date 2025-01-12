@@ -7,7 +7,7 @@
 {% block main %}
     <div id="mainBody">
         <header>
-            <h1>Health Analyzer</h1>
+            <h1>Skin Analyzer</h1>
             <h2>Upload an image for analysis</h2>
         </header>
         <div class="upload-container">
@@ -33,6 +33,10 @@
                 video.style.display = "none";
                 const captureButton = document.getElementById("captureButton");
                 captureButton.style.display = "none";
+
+                const pos = document.getElementById("mainBody");
+                pos.style.marginTop = '0vh';
+
             
                 if (file) {
                     const reader = new FileReader();
@@ -41,7 +45,8 @@
                         previewContainer.innerHTML = `<img src="${e.target.result}" alt="Uploaded Image" style="max-width: 90%; max-height: 60vh;">`;
 
                         const imageData = e.target.result;
-                        saveImageToDatabase(imageData);
+                        // saveImageToDatabase(imageData);
+                        classify(imageData);
                     };
                     reader.readAsDataURL(file);
                 } else {
@@ -87,27 +92,56 @@
                 const imageData = canvas.toDataURL('image/png'); // Base64-encoded PNG
 
                 // Send the image data to the server for saving
-                saveImageToDatabase(imageData);
+                // saveImageToDatabase(imageData);
+                classify(imageData);
             }
 
-            function saveImageToDatabase(imageData) {
-                fetch('/save-image', {
+            function classify(imageData) {
+                fetch('/classify', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({ image: imageData })
                 })
-                .then(response => response.json())
+                .then(response => {
+                    if (response.redirected) {
+                        window.location.href = response.url;
+                        if (response.url=="http://localhost:3000/") {
+                            alert("Skin likely Benign!")
+                        }
+                    } else {
+                        return response.json();
+                    }
+                })
                 .then(data => {
-                    alert('Image saved successfully');
+                    // alert('Image sent successfully');
                     console.log(data);
                 })
                 .catch(error => {
                     console.error('Error saving image:', error);
-                    alert('Error saving image');
+                    // alert('Error saving image');
                 });
             }
+
+            // function saveImageToDatabase(imageData) {
+            //     fetch('/save-image', {
+            //         method: 'POST',
+            //         headers: {
+            //             'Content-Type': 'application/json',
+            //         },
+            //         body: JSON.stringify({ image: imageData })
+            //     })
+            //     .then(response => response.json())
+            //     .then(data => {
+            //         // alert('Image saved successfully');
+            //         console.log(data);
+            //     })
+            //     .catch(error => {
+            //         console.error('Error saving image:', error);
+            //         // alert('Error saving image');
+            //     });
+            // }
         </script>
     </div>
 {% endblock %}

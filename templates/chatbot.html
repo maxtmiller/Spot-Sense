@@ -1,0 +1,48 @@
+{% extends "layout.html" %}
+
+{% block title %}
+   Chatbot - Skin Cancer Help
+{% endblock %}
+
+{% block main %}
+    <h1>Chatbot Help</h1>
+    <div class="chat-container">
+        <div class="chat-box" id="chat-box">
+            <!-- Chat history will be dynamically populated here -->
+        </div>
+
+        <div class="input-container">
+            <input type="text" id="user-input" placeholder="Type your message..." autofocus>
+            <button id="send-btn" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        function sendMessage() {
+            var userMessage = document.getElementById('user-input').value;
+            if (userMessage.trim() === '') return;
+
+            var chatBox = document.getElementById('chat-box');
+            chatBox.innerHTML += '<div class="message user-message">' + userMessage + '</div>';
+            document.getElementById('user-input').value = '';
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            fetch('/chatbot/message', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ message: userMessage })
+            })
+            .then(response => response.json())
+            .then(data => {
+                var botMessage = data.response;
+                chatBox.innerHTML += '<div class="message bot-message">' + botMessage + '</div>';
+                chatBox.scrollTop = chatBox.scrollHeight;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+    </script>
+{% endblock %}

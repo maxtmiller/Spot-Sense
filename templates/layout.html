@@ -15,6 +15,9 @@
         <link href="/static/styling/load.css" rel="stylesheet">
         <link href="/static/styling/main.css" rel="stylesheet">
         <link href="/static/styling/images.css" rel="stylesheet">
+        <link href="/static/styling/chatbot.css" rel="stylesheet">
+        <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet"> -->
         <title>DeltaHacks Project: {% block title %}{% endblock %}</title>
     </head>
     <body>
@@ -28,6 +31,7 @@
                 {% if session["user_id"] %}
                     <ul class="nav navbar-nav" id="navTitle" style="display: none;">
                         <li class="nav-item {% if request.path == '/' %}active{% endif %}" style="margin-right: 200px;"><a id="p1" class="nav-link" href="/#">Home</a></li>
+                        <li class="nav-item {% if request.path == '/help' %}active{% endif %}" style="margin-right: 200px;"><a id="p1" class="nav-link" href="/help">Help</a></li>
                         <li class="nav-item {% if request.path == '/images' %}active{% endif %}" style="margin-right: 200px;"><a id="p1" class="nav-link" href="/images">History</a></li>
                     </ul>
 

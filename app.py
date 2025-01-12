@@ -12,11 +12,11 @@ import io
 from PIL import Image
 
 import sqlite3
-from flask import Flask, flash, redirect, render_template, session, request, jsonify, send_file, g
+from flask import Flask, flash, redirect, render_template, session, request, jsonify, send_file
 from flask_session import Session
 
 from werkzeug.security import check_password_hash, generate_password_hash
-from helpers import login_required, before_first_request, check_for_sql, clear_session, generate_password, valid_email
+from helpers import login_required, before_first_request, check_for_sql, clear_session, generate_password, valid_email, classification_model, cohere_chat
 
 from google.oauth2 import id_token
 from google.auth.transport import requests
@@ -225,44 +225,100 @@ def home():
     return render_template("home.html", user=user)
 
 
-# Route to save the captured image to the database
-@app.route("/save-image", methods=["POST"])
-def save_image():
-    """Save Image to Database"""
+@app.route("/classify", methods=["POST"])
+@login_required
+def classify():
+    """Classify Skin Cancer from Model"""
 
     conn = get_db_connection()
     db = conn.cursor()
 
-    if "user_id" not in session:
-        conn.close()
-        return jsonify({"error": "User is not logged in"}), 403
+    user_id = session["user_id"]
+    user = db.execute("SELECT * FROM users WHERE id = ?;", (user_id,)).fetchone()
+
+    data = request.get_json()
+    image_data = data.get("image")
+
+    image_data = image_data.split(',')[1]
+    image_bytes = base64.b64decode(image_data)
+    image = Image.open(BytesIO(image_bytes))
+
+    img_byte_arr = io.BytesIO()
+    image.save(img_byte_arr, format='PNG')
+    img_byte_arr.seek(0)
+
+    vals = classification_model(img_byte_arr)
+
+    print(vals[1],type(vals[1]))
+    db.execute("INSERT INTO images (image, user_id, classification, accuracy) VALUES (?, ?, ?, ?)", (sqlite3.Binary(image_bytes),user_id,vals[0],str(vals[1])))
+    conn.commit()
+
+    conn.close()
+
+    if (vals[0]=="malignant"):
+        flash("Skin likely Malignant!")
+        return redirect("/help")
+
+    flash("Skin likely Benign!")
+    return redirect("/images")
+
+
+@app.route("/help")
+@login_required
+def help():
+    """Help Page"""
+
+    conn = get_db_connection()
+    db = conn.cursor()
 
     user_id = session["user_id"]
     user = db.execute("SELECT * FROM users WHERE id = ?;", (user_id,)).fetchone()
 
-    # Get the image data from the request
-    data = request.get_json()
-    image_data = data.get("image")
-
-    if image_data:
-        # Strip the base64 prefix ('data:image/png;base64,')
-        image_data = image_data.split(',')[1]
-
-        # Convert base64 to image
-        image_bytes = base64.b64decode(image_data)
-        image = Image.open(BytesIO(image_bytes))
-
-        db.execute("INSERT INTO images (image, user_id) VALUES (?, ?)", (sqlite3.Binary(image_bytes),user_id))
-        conn.commit()
-
-        conn.close()
-        return jsonify({"message": "Image saved successfully"}), 200
-    
     conn.close()
-    return jsonify({"error": "No image data provided"}), 400
+    return render_template("help.html", user=user)
 
 
-# Assuming you have a database setup already
+@app.route("/map")
+@login_required
+def nearby_hospitals():
+    """Logic for finding nearby hospitals"""
+
+    conn = get_db_connection()
+    db = conn.cursor()
+
+    user_id = session["user_id"]
+    user = db.execute("SELECT * FROM users WHERE id = ?;", (user_id,)).fetchone()
+
+    conn.close()
+    return render_template("map.html", user=user)
+
+
+@app.route("/chatbot")
+@login_required
+def chatbot():
+    """Logic for chatbot page"""
+
+    conn = get_db_connection()
+    db = conn.cursor()
+
+    user_id = session["user_id"]
+    user = db.execute("SELECT * FROM users WHERE id = ?;", (user_id,)).fetchone()
+
+    conn.close()
+    return render_template("chatbot.html", user=user)
+
+@app.route("/chatbot/message", methods=["POST"])
+def chatbot_message():
+    # Get the user's message from the frontend
+    user_message = request.json["message"]
+
+    # Call the cohere_chat function to get the response
+    bot_response = cohere_chat(user_message)
+
+    # Return the response as JSON
+    return jsonify({"response": bot_response})
+
+
 def get_image_from_db(image_id):
     """Retrieve Image from Database"""
 
@@ -295,6 +351,7 @@ def view_image(image_id):
 
 
 @app.route("/images")
+@login_required
 def images():
     """Display Images"""
 
@@ -305,12 +362,12 @@ def images():
     user = db.execute("SELECT * FROM users WHERE id = ?;", (user_id,)).fetchone()
     
     # Fetch Image IDs
-    images = db.execute("SELECT id FROM images WHERE user_id = ?", (user_id,)).fetchall()
+    images_data = db.execute("SELECT id, classification, accuracy FROM images WHERE user_id = ?", (user_id,)).fetchall()
     print(images)
     
     conn.close()
 
-    return render_template("images.html", images=images, user=user)
+    return render_template("images.html", images=images_data, user=user)
 
 
 @app.route("/settings", methods=["GET", "POST"] )

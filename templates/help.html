@@ -1,0 +1,34 @@
+{% extends "layout.html" %}
+
+{% block title %}
+   Help
+{% endblock %}
+
+{% block main %}
+    <div class="container mt-5">
+        <div class="text-center mb-4">
+            <h1 class="display-4">We’re Here to Help</h1>
+            <p class="lead text-muted">It’s important to take action. Choose one of the options below to proceed.</p>
+        </div>
+
+        <div class="card shadow-lg mx-auto" style="max-width: 900px; border: none; margin-top: 20vh;">
+            <div class="card-body">
+                <h3 class="card-title text-center text-danger">Skin Cancer Concern</h3>
+                <p class="card-text text-center">
+                    Based on the analysis, it is recommended that you seek professional medical advice. 
+                    Take one of the following steps:
+                </p>
+
+                <div class="d-flex justify-content-center mt-4">
+                    <a href="/nearby-hospitals" class="btn btn-primary btn-lg mx-2">
+                        <i class="fas fa-hospital"></i> Find Nearby Hospitals
+                    </a>
+                    
+                    <a href="/chatbot" class="btn btn-secondary btn-lg mx-2">
+                        <i class="fas fa-comments"></i> Talk to a Chatbot
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

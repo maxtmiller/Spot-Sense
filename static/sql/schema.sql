@@ -11,5 +11,6 @@ CREATE TABLE images (
     image BLOB,
     user_id INTEGER,
     classification TEXT,
+    accuracy TEXT,
     FOREIGN KEY (user_id) REFERENCES users (id)
 );
