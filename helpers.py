@@ -3,6 +3,7 @@ import secrets
 import string
 import re
 import json
+import cohere
 
 from os import path
 from iso639 import Lang
@@ -94,3 +95,27 @@ def generate_password(length):
 def valid_email(email):
     emailRegex = r"^[^\s@]+@[^\s@]+\.[^\s@]+$"
     return re.match(emailRegex, email) is not None
+
+def cohere_chat():
+    co = cohere.ClientV2(api_key="COHERE_API_KEY")
+
+    # Add the user message
+    message = "I think I might have Skin cancer. Could you suggest what I can do and tell me a bit about what this means for me?"
+
+    # Create a custom system message
+    system_message = """## Task and Context
+    You are a medical professional providing advice to someone who might have skin cancer
+
+    ## Style Guide
+    Try to speak as factual as possible, do not scare the patient. Be professional and empathetic."""
+
+    # Add the messages
+    messages = [
+        {"role": "system", "content": system_message},
+        {"role": "user", "content": message},
+    ]
+
+    # Generate the response
+    response = co.chat(model="command-r-plus-08-2024", messages=messages)
+
+    print(response.message.content[0].text)
