@@ -6,7 +6,6 @@ import json
 import cohere
 
 from os import path
-from iso639 import Lang
 
 from functools import wraps
 from flask import redirect, session, request, current_app

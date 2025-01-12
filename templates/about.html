@@ -1,52 +1,13 @@
-{% extends "layout.html" %} {% block title %} About {% endblock %} {% block main
-    %}
-    <style>
-        body {
-          margin: 0;
-          padding: 0;
-          font-family: Arial, sans-serif;
-          background-color: #f9f9f9;
-          color: #333;
-        }
-        
-        /* Container to center content */
-        .container {
-          max-width: 600px;
-          margin: 50px auto;
-          background-color: #fff;
-          padding: 20px;
-          border-radius: 8px;
-          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-        
-        p {
-          font-size: 1rem;
-          line-height: 1.5;
-          margin-bottom: 1rem;
-        }
-        
-    
-        ol {
-          margin: 1rem 0 1rem 2rem;
-        }
-        
-        li {
-          margin: 0.5rem 0;
-        }
-        
-    
-        h1 {
-          margin-top: 0; 
-          font-size: 2.5rem;
-          text-align: center;
-          margin-bottom: 1rem;
-        }
-      </style>
-    </head>
-    <body>
-    
+{% extends "layout.html" %} 
+
+{% block title %} 
+  About 
+{% endblock %} 
+
+{% block main %}
+    <div id="aboutBody">
       <div class="container">
-        <h1>Features</h1>
+        <h1 id="aboutH1">Features</h1>
         <p>
           Our web app leverages advanced technologies to detect and manage skin cancer, offering the following features:
         </p>
@@ -58,6 +19,5 @@
           <li>Secure authentication via Google OAuth, ensuring a smooth user experience</li>
         </ol>
       </div>
-    
-    </body>
-    {% endblock %}
+    </div>
+{% endblock %}
