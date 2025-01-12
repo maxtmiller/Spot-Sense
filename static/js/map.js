@@ -48,6 +48,28 @@ let map;
             autocomplete.bindTo("bounds", map);
         }
 
+        function setupPageEvents() {
+            // Reinitialize the map when the page becomes visible
+            document.addEventListener("visibilitychange", () => {
+                if (document.visibilityState === "visible") {
+                    initMap();
+                }
+            });
+
+            // Reinitialize the map after returning from navigation
+            window.addEventListener("pageshow", initMap);
+        }
+
+        // Wait for the API to load, then set up events
+        window.addEventListener("load", () => {
+            if (typeof google !== "undefined" && google.maps) {
+                initMap();
+                setupPageEvents();
+            } else {
+                console.error("Google Maps API failed to load.");
+            }
+        });
+
         function setAddress() {
             const place = autocomplete.getPlace();
 
@@ -234,9 +256,7 @@ let map;
                 }
             });
         }
-
-
-
+        
         function downloadRoutesAsICS(allRoutesSteps) {
             let icsContent = 'BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Routes Export//EN\n';
 

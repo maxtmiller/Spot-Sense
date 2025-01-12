@@ -5,19 +5,14 @@ import re
 import json
 import cohere
 
-from os import path
-
 from functools import wraps
 from flask import redirect, session, request, current_app
 
 import os.path
 import sqlite3
-from sqlite3 import Error
 
-from PIL import Image
 import tensorflow as tf
 from tensorflow.keras import models, layers
-import matplotlib.pyplot as plt
 import numpy as np
 import os
 

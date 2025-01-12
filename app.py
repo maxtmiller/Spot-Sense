@@ -1,4 +1,3 @@
-import os.path
 import requests
 import json
 import base64
