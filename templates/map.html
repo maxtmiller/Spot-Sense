@@ -1,73 +1,27 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Nearest Emergency Hospital with Unique Routes</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: #f0f8ff;
-            flex-direction: column;
-        }
+{% extends "layout.html" %}
 
-        .input-container {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
-            z-index: 1000;
-        }
+{% block title %}
+   Map
+{% endblock %}
 
-        .input-container select,
-        .input-container input {
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-
-        #map {
-            width: 80%;
-            height: 60%;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
-            border-radius: 10px;
-        }
-
-        #route-info {
-            margin-top: 10px;
-            width: 80%;
-            padding: 10px;
-            background-color: #ffffff;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
-            border-radius: 10px;
-        }
-
-        .route-color {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            margin-right: 5px;
-        }
-    </style>
+{% block main %}
+    <h1 style="display: block;">Nearest Hospitals</h1>
+    <div id="mapBody">
+        <div class="input-container-map">
+            <input id="address" type="text" placeholder="Enter an address" />
+            <select id="travel-mode">
+                <option value="DRIVING">Driving</option>
+                <option value="WALKING">Walking</option>
+                <option value="TRANSIT">Transit</option>
+            </select>
+            <button class="btn-primary" onclick="setAddress()" style="border-radius:5px;width:3vw;">Go</button>
+        </div>
+        <div id="map" style="height:50vh!important;"></div>
+        <div id="route-info"></div>
+    </div>
     <script async
         src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBBbBrew5YJ1i2wYE6piD5cbrtA_qj9NIs&libraries=places&callback=initMap">
     </script>
-</head>
-<body>
-    <div class="input-container">
-        <input id="address" type="text" placeholder="Enter an address" />
-        <select id="travel-mode">
-            <option value="DRIVING">Driving</option>
-            <option value="WALKING">Walking</option>
-            <option value="TRANSIT">Transit</option>
-        </select>
-        <button onclick="setAddress()">Go</button>
-    </div>
-    <div id="map"></div>
-    <div id="route-info"></div>
     <script>
         let map;
         let marker;
@@ -126,26 +80,26 @@
 
             if (!input) {  // if no inputted location, users current location is used
                 if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        const userLocation = {
-                            lat: position.coords.latitude,
-                            lng: position.coords.longitude,
-                        };
-                        map.setCenter(userLocation);
-                        map.setZoom(15);
-                        marker.setPosition(userLocation);
-                        marker.setTitle("You are here!");
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            const userLocation = {
+                                lat: position.coords.latitude,
+                                lng: position.coords.longitude,
+                            };
+                            map.setCenter(userLocation);
+                            map.setZoom(15);
+                            marker.setPosition(userLocation);
+                            marker.setTitle("You are here!");
 
-                        findNearestHospital(userLocation);
-                    },
-                    () => {
-                        console.error("Geolocation failed or was denied.");
-                    }
-                );
-            }
+                            findNearestHospital(userLocation);
+                        },
+                        () => {
+                            console.error("Geolocation failed or was denied.");
+                        }
+                    );
+                }
                 return;
-    }
+            }
 
             if (!place.geometry) {
                 alert("No details available for the entered address.");
@@ -219,168 +173,128 @@
 
 
         function displayRoutes(origin, destination, travelMode) {
-    const request = {
-        origin: origin,
-        destination: destination,
-        travelMode: travelMode,
-        provideRouteAlternatives: true,
-    };
+            const request = {
+                origin: origin,
+                destination: destination,
+                travelMode: travelMode,
+                provideRouteAlternatives: true,
+            };
 
-    directionsService.route(request, (response, status) => {
-        if (status === google.maps.DirectionsStatus.OK) {
-            directionsRenderers.forEach((renderer) => renderer.setMap(null));
-            directionsRenderers = [];
+            directionsService.route(request, (response, status) => {
+                if (status === google.maps.DirectionsStatus.OK) {
+                    directionsRenderers.forEach((renderer) => renderer.setMap(null));
+                    directionsRenderers = [];
 
-            const routeInfo = document.getElementById("route-info");
-            routeInfo.innerHTML = `<h3>${travelMode} Routes</h3>`;
+                    const routeInfo = document.getElementById("route-info");
+                    routeInfo.innerHTML = `<h3>${travelMode} Routes</h3>`;
 
-            const routes = response.routes;
-            const allRoutesSteps = [];
-            const seenRoutes = new Set();
-            let routeNumber = 1;
+                    const routes = response.routes;
+                    const allRoutesSteps = [];
+                    const seenRoutes = new Set();
+                    let routeNumber = 1;
 
-            routes.forEach((route, index) => {
-                const routeKey = route.overview_polyline;
-                if (seenRoutes.has(routeKey)) {
-                    return;
-                }
-                seenRoutes.add(routeKey);
-
-                const renderer = new google.maps.DirectionsRenderer({
-                    map: map,
-                    directions: response,
-                    routeIndex: index,
-                    polylineOptions: {
-                        strokeColor: routeColors[routeNumber % routeColors.length],
-                        strokeOpacity: 0.7,
-                        strokeWeight: 5,
-                    },
-                    suppressMarkers: true,
-                });
-
-                directionsRenderers.push(renderer);
-
-                const eta = route.legs[0].duration.text;
-                const colorIndicator = `<span class="route-color" style="background-color: ${routeColors[routeNumber % routeColors.length]};"></span>`;
-                let transitDetails = "";
-
-                if (travelMode === "TRANSIT") {
-                    const steps = route.legs[0].steps;
-                    steps.forEach((step) => {
-                        if (step.travel_mode === "TRANSIT") {
-                            const transit = step.transit;
-                            transitDetails += `
-                                <br><strong>Take:</strong> ${transit.line.name || transit.line.short_name} (${transit.line.vehicle.type})
-                                <br><strong>From:</strong> ${transit.departure_stop.name}
-                                <br><strong>To:</strong> ${transit.arrival_stop.name}
-                                <br><strong>Departure:</strong> ${transit.departure_time.text}
-                                <br><strong>Arrival:</strong> ${transit.arrival_time.text}
-                                <br>`;
+                    routes.forEach((route, index) => {
+                        const routeKey = route.overview_polyline;
+                        if (seenRoutes.has(routeKey)) {
+                            return;
                         }
+                        seenRoutes.add(routeKey);
+
+                        const renderer = new google.maps.DirectionsRenderer({
+                            map: map,
+                            directions: response,
+                            routeIndex: index,
+                            polylineOptions: {
+                                strokeColor: routeColors[routeNumber % routeColors.length],
+                                strokeOpacity: 0.7,
+                                strokeWeight: 5,
+                            },
+                            suppressMarkers: true,
+                        });
+
+                        directionsRenderers.push(renderer);
+
+                        const eta = route.legs[0].duration.text;
+                        const colorIndicator = `<span class="route-color" style="background-color: ${routeColors[routeNumber % routeColors.length]};"></span>`;
+                        let transitDetails = "";
+
+                        if (travelMode === "TRANSIT") {
+                            const steps = route.legs[0].steps;
+                            steps.forEach((step) => {
+                                if (step.travel_mode === "TRANSIT") {
+                                    const transit = step.transit;
+                                    transitDetails += `
+                                        <br><strong>Take:</strong> ${transit.line.name || transit.line.short_name} (${transit.line.vehicle.type})
+                                        <br><strong>From:</strong> ${transit.departure_stop.name}
+                                        <br><strong>To:</strong> ${transit.arrival_stop.name}
+                                        <br><strong>Departure:</strong> ${transit.departure_time.text}
+                                        <br><strong>Arrival:</strong> ${transit.arrival_time.text}
+                                        <br>`;
+                                }
+                            });
+                        }
+
+                        routeInfo.innerHTML += `<p>${colorIndicator}<strong>Route ${routeNumber}:</strong> ETA: ${eta}${transitDetails}</p>`;
+
+                        const steps = route.legs[0].steps;
+                        const routeSteps = steps.map((step, stepIndex) => {
+                            const roadName = step.instructions.replace(/<[^>]*>/g, '') || 'Unnamed road';
+                            return `Step ${stepIndex + 1}: ${roadName}`;
+                        });
+
+                        allRoutesSteps.push(`Route ${routeNumber}:\nETA: ${eta}\n${routeSteps.join('\n')}`);
+                        routeNumber++;
                     });
+
+                    let downloadButton = document.getElementById("download-button");
+                    if (!downloadButton) {
+                        downloadButton = document.createElement('button');
+                        downloadButton.id = "download-button";
+                        downloadButton.textContent = 'Download All Routes';
+                        downloadButton.onclick = () => downloadRoutesAsICS(allRoutesSteps);
+                        routeInfo.appendChild(downloadButton);
+                    }
+                } else {
+                    console.error(`Directions request failed due to ${status}`);
                 }
+            });
+        }
 
-                routeInfo.innerHTML += `<p>${colorIndicator}<strong>Route ${routeNumber}:</strong> ETA: ${eta}${transitDetails}</p>`;
 
-                const steps = route.legs[0].steps;
-                const routeSteps = steps.map((step, stepIndex) => {
-                    const roadName = step.instructions.replace(/<[^>]*>/g, '') || 'Unnamed road';
-                    return `Step ${stepIndex + 1}: ${roadName}`;
-                });
 
-                allRoutesSteps.push(`Route ${routeNumber}:\nETA: ${eta}\n${routeSteps.join('\n')}`);
-                routeNumber++;
+        function downloadRoutesAsICS(allRoutesSteps) {
+            let icsContent = 'BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Routes Export//EN\n';
+
+            allRoutesSteps.forEach((routeSteps, index) => {
+                icsContent += `BEGIN:VEVENT\n`;
+                icsContent += `SUMMARY:Route ${index + 1}\n`;
+                icsContent += `DESCRIPTION:${routeSteps.replace(/\n/g, '\\n')}\n`;
+                icsContent += `DTSTART:${formatICSDate(new Date())}\n`; // Start date of the route
+                icsContent += `DTEND:${formatICSDate(new Date(new Date().getTime() + 3600000))}\n`; // End date + 1 hour
+                icsContent += `END:VEVENT\n`;
             });
 
-            let downloadButton = document.getElementById("download-button");
-            if (!downloadButton) {
-                downloadButton = document.createElement('button');
-                downloadButton.id = "download-button";
-                downloadButton.textContent = 'Download All Routes';
-                downloadButton.onclick = () => downloadRoutesAsICS(allRoutesSteps);
-                routeInfo.appendChild(downloadButton);
-            }
-        } else {
-            console.error(`Directions request failed due to ${status}`);
+            icsContent += 'END:VCALENDAR';
+
+            // Create and download the .ics file
+            const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'routes.ics';
+            a.click();
+            URL.revokeObjectURL(url);
         }
-    });
-}
 
-
-
-function downloadRoutesAsICS(allRoutesSteps) {
-    let icsContent = 'BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Routes Export//EN\n';
-
-    allRoutesSteps.forEach((routeSteps, index) => {
-        icsContent += `BEGIN:VEVENT\n`;
-        icsContent += `SUMMARY:Route ${index + 1}\n`;
-        icsContent += `DESCRIPTION:${routeSteps.replace(/\n/g, '\\n')}\n`;
-        icsContent += `DTSTART:${formatICSDate(new Date())}\n`; // Start date of the route
-        icsContent += `DTEND:${formatICSDate(new Date(new Date().getTime() + 3600000))}\n`; // End date + 1 hour
-        icsContent += `END:VEVENT\n`;
-    });
-
-    icsContent += 'END:VCALENDAR';
-
-    // Create and download the .ics file
-    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'routes.ics';
-    a.click();
-    URL.revokeObjectURL(url);
-}
-
-function formatICSDate(date) {
-    const year = date.getUTCFullYear();
-    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-    const day = String(date.getUTCDate()).padStart(2, '0');
-    const hours = String(date.getUTCHours()).padStart(2, '0');
-    const minutes = String(date.getUTCMinutes()).padStart(2, '0');
-    const seconds = String(date.getUTCSeconds()).padStart(2, '0');
-    return `${year}${month}${day}T${hours}${minutes}${seconds}Z`;
-}
-
-
-
-
-
-
-        // function downloadRoutesAsICS(allRoutesSteps) {
-        //     let icsContent = 'BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Routes Export//EN\n';
-
-        //     allRoutesSteps.forEach((routeSteps, index) => {
-        //         icsContent += `BEGIN:VEVENT\n`;
-        //         icsContent += `SUMMARY:Route ${index + 1}\n`;
-        //         icsContent += `DESCRIPTION:${routeSteps.replace(/\n/g, '\\n')}\n`;
-        //         icsContent += `DTSTART:${formatICSDate(new Date())}\n`; // Start date of the route
-        //         icsContent += `DTEND:${formatICSDate(new Date(new Date().getTime() + 3600000))}\n`; // End date + 1 hour
-        //         icsContent += `END:VEVENT\n`;
-        //     });
-
-        //     icsContent += 'END:VCALENDAR';
-
-        //     // Create and download the .ics file
-        //     const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-        //     const url = URL.createObjectURL(blob);
-        //     const a = document.createElement('a');
-        //     a.href = url;
-        //     a.download = 'routes.ics';
-        //     a.click();
-        //     URL.revokeObjectURL(url);
-        // }
-
-        // function formatICSDate(date) {
-        //     const year = date.getUTCFullYear();
-        //     const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-        //     const day = String(date.getUTCDate()).padStart(2, '0');
-        //     const hours = String(date.getUTCHours()).padStart(2, '0');
-        //     const minutes = String(date.getUTCMinutes()).padStart(2, '0');
-        //     const seconds = String(date.getUTCSeconds()).padStart(2, '0');
-        //     return `${year}${month}${day}T${hours}${minutes}${seconds}Z`;
-        // }
+        function formatICSDate(date) {
+            const year = date.getUTCFullYear();
+            const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+            const day = String(date.getUTCDate()).padStart(2, '0');
+            const hours = String(date.getUTCHours()).padStart(2, '0');
+            const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+            const seconds = String(date.getUTCSeconds()).padStart(2, '0');
+            return `${year}${month}${day}T${hours}${minutes}${seconds}Z`;
+        }
 
     </script>
-</body>
-</html>
+{% endblock %}
