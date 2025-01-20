@@ -10,7 +10,6 @@ Meet SpotSense, a user-friendly web app that takes the guesswork out of checking
 We built SpotSense by combining several powerful tools and frameworks to ensure accuracy and ease of use. At its core is a TensorFlow-trained model, which relies on neural networks and machine learning to analyze user-submitted or webcam-captured images and classify them as potentially malignant or benign. These images are stored in an SQL database for future review or follow-up. We also integrated a “Help” section that uses the Google Maps API to help users quickly locate hospitals if they need additional medical support, employing a Cohere-powered chatbot to answer general questions about skin diseases. Finally, we implemented Google OAuth to deliver a secure login experience, ensuring user data remains protected while offering a streamlined workflow.
 
 ## 🖥 TECHNOLOGIES USED 🖥
-
 - Frontend: HTML, CSS, Jinja
 - Backend: Flask, Python, Javascript
 - Libraries: Tensorflow, Keras, Google OAuth, Google Maps API, Pillow, Numpy
