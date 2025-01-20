@@ -1,4 +1,4 @@
-# DeltaHacks XI:
+# [`DeltaHacks XI`](https://devpost.com/software/skin-analyzer)
 
 ## 💡INSPIRATION BEHIND SPOTSNSE💡
 We created this app because we saw how scary and confusing it can be for people who notice a new spot or mole and aren’t sure what it means. We wanted to give everyone an easy way to check their skin, find answers fast, and connect with medical help if needed. By combining AI with simple, user-friendly tools, we strive to make it less overwhelming to stay on top of your skin health and catch potential issues early—because a little peace of mind can make a big difference.
