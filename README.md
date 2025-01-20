@@ -29,5 +29,5 @@ Setting up webcam features
 Using Google Maps API to retrieve routes to the nearest hospitals based on user address
 Using Cohere API to create a friendly chatbot
 
-## What's Next for SpotSense?
+## 🚀 What's Next for SpotSense? 🚀
 Next for SpotSense, we aim to enhance our AI model's accuracy by incorporating a broader dataset to improve predictions across diverse skin types and conditions. We plan to integrate telemedicine features, allowing users to connect directly with dermatologists for professional advice. Additionally, we’re working on a personalized health-tracking dashboard where users can monitor skin changes over time and receive tailored health tips. With future updates, we envision SpotSense becoming a comprehensive tool for proactive skin health management.
