@@ -4,7 +4,6 @@
 We created this app because we saw how scary and confusing it can be for people who notice a new spot or mole and aren’t sure what it means. We wanted to give everyone an easy way to check their skin, find answers fast, and connect with medical help if needed. By combining AI with simple, user-friendly tools, we strive to make it less overwhelming to stay on top of your skin health and catch potential issues early—because a little peace of mind can make a big difference.
 
 ## 🔍 &nbsp;&nbsp;&nbsp;**What is SpotSense?**&nbsp;&nbsp;&nbsp; 🔍
-This should create larger gaps between the emoji and the text.
 Meet SpotSense, a user-friendly web app that takes the guesswork out of checking for skin cancer. Upload or snap a photo through your webcam, and our TensorFlow model will analyze it to see if it might be malignant or benign. Your images are stored securely in an SQL database, and there’s even a “Help” section, powered by Google Maps that help find nearby hospitals. Need more guidance? Our Cohere-powered chatbot is on hand to answer questions about skin diseases, and Google OAuth keeps everything secure for a smooth experience.
 
 ## 🛠️ &nbsp;&nbsp;&nbsp;**How We Built It**&nbsp;&nbsp;&nbsp; 🛠️
