@@ -4,3 +4,4 @@ __pycache__
 .vercel
 classification_model
 Image_Tests
+vercel.json
