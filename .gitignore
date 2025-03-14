@@ -3,3 +3,4 @@ __pycache__
 .env
 .vercel
 classification_model
+Image_Tests

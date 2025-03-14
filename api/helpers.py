@@ -15,8 +15,9 @@ import os.path
 import sqlite3
 
 import tensorflow as tf
-from tensorflow.keras import models, layers
+from tensorflow.keras import models
 import numpy as np
+
 
 def login_required(f):
     """Decorate routes to require login"""
@@ -47,7 +48,7 @@ def before_first_request(f):
 
     return decorated_function
 
-# Runs SQL from file
+
 def run_sql(sql_file):
     """Runs SQL Commands from a file"""
     db_path = os.path.join(os.path.dirname(__file__), 'database.db')
@@ -65,7 +66,7 @@ def run_sql(sql_file):
     finally:
         conn.close()
 
-# Creates SQL structures if they don't exist
+
 def check_for_sql(app):
     """Ensures SQL structures exist"""
     db_path = os.path.join(os.path.dirname(__file__), 'database.db')
@@ -88,16 +89,17 @@ def clear_session(app):
 
         app.config["BEFORE_REQUEST_EXECUTED"] = True
 
-# Generates a random password
+
 def generate_password(length):
     characters = string.ascii_letters + string.digits + string.punctuation
     password = ''.join(secrets.choice(characters) for _ in range(length))
     return password
 
-#Checks for correct email regex
+
 def valid_email(email):
     emailRegex = r"^[^\s@]+@[^\s@]+\.[^\s@]+$"
     return re.match(emailRegex, email) is not None
+
 
 def cohere_chat(user_message):
     try:

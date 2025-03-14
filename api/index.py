@@ -1,5 +1,4 @@
 import requests
-import json
 import base64
 import os
 from io import BytesIO
@@ -346,7 +345,7 @@ def view_image(image_id):
 
     image_ids = db.execute("SELECT id FROM images WHERE user_id = ?", (user_id,)).fetchall()
     image_ids = [image[0] for image in image_ids]
-    
+
     if image_id not in image_ids:
         images_data = db.execute("SELECT id, classification, accuracy FROM images WHERE user_id = ?", (user_id,)).fetchall()
         conn.close()
