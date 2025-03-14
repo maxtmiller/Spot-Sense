@@ -5,6 +5,9 @@ import re
 import json
 import cohere
 
+from dotenv import load_dotenv
+load_dotenv()
+
 from functools import wraps
 from flask import redirect, session, request, current_app
 
@@ -100,11 +103,10 @@ def valid_email(email):
 def cohere_chat(user_message):
     try:
         # Load API key from a JSON file
-        with open('./static/cred.json', 'r') as file:
-            data = json.load(file)['CohereAPIKey']
+        API = os.getenv("COHEREAPIKEY")
 
         # Initialize Cohere API client
-        co = cohere.ClientV2(api_key=data)
+        co = cohere.ClientV2(api_key=API)
 
         # Define the system message context
         system_message = """## Task and Context

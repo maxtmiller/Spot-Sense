@@ -1,9 +1,13 @@
 import requests
 import json
 import base64
+import os
 from io import BytesIO
 import io
 from PIL import Image
+
+from dotenv import load_dotenv
+load_dotenv()
 
 import sqlite3
 from flask import Flask, flash, redirect, render_template, session, request, jsonify, send_file
@@ -530,11 +534,9 @@ def about():
 
 @app.route('/google-signin', methods=['POST'])
 def google_signin():
-
-    with open('./static/cred.json', 'r') as file:
-        data = json.load(file)['clientID']
+    """Google Signin"""
         
-    YOUR_CLIENT_ID = data
+    YOUR_CLIENT_ID = os.getenv('CLIENTID')
 
     id_token_received = request.form['id_token']
 
@@ -586,4 +588,5 @@ def google_signin():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port="3000", debug=True)
+    port = int(os.getenv('PORT', 3000))
+    app.run(host="0.0.0.0", port=port, debug=True)
