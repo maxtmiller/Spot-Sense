@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS users (
     auto_generated BOOLEAN
 );
 
-CREATE TABLE images (
+CREATE TABLE IF NOT EXISTS images (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     image BLOB,
     user_id INTEGER,

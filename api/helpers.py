@@ -51,11 +51,11 @@ def before_first_request(f):
 # Runs SQL from file
 def run_sql(sql_file):
     """Runs SQL Commands from a file"""
-    db_path = "./static/sql/database.db"
+    db_path = os.path.join(os.path.dirname(__file__), 'database.db')
     try:
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
-        with open('./static/sql/' + sql_file, 'r') as file:
+        with open(sql_file, 'r') as file:
             sql_commands = file.read().split(';')
         for command in sql_commands:
             if command.strip():
@@ -69,10 +69,10 @@ def run_sql(sql_file):
 # Creates SQL structures if they don't exist
 def check_for_sql(app):
     """Ensures SQL structures exist"""
-    db_path = "./static/sql/database.db"
+    db_path = os.path.join(os.path.dirname(__file__), 'database.db')
     if not app.config.get("BEFORE_CHECK_EXECUTED"):
         if not os.path.exists(db_path):
-            run_sql('schema.sql')
+            run_sql('./schema.sql')
         app.config["BEFORE_CHECK_EXECUTED"] = True
 
 # Clears local flask sessions

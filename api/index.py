@@ -20,7 +20,7 @@ from google.oauth2 import id_token
 from google.auth.transport import requests
 
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='../templates', static_folder="../static")
 
 
 app.config["SESSION_PERMANENT"] = False
@@ -30,7 +30,8 @@ Session(app)
 
 def get_db_connection():
     """Create and return a new database connection."""
-    conn = sqlite3.connect("static/sql/database.db", check_same_thread=False)
+    db_path = os.path.join(os.path.dirname(__file__), 'database.db')
+    conn = sqlite3.connect(db_path, check_same_thread=False)
     conn.row_factory = sqlite3.Row
 
     return conn
