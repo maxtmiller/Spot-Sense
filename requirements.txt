@@ -1,0 +1,12 @@
+requests
+pillow
+python-dotenv
+flask
+flask-session
+werkzeug
+google-auth
+google-auth-oauthlib
+google-auth-httplib2
+cohere
+tensorflow
+numpy
