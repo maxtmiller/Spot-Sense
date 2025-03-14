@@ -11,3 +11,5 @@ cohere
 tensorflow
 numpy
 gunicorn
+sqlite3
+
