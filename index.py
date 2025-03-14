@@ -19,7 +19,7 @@ from google.oauth2 import id_token
 from google.auth.transport import requests
 
 
-app = Flask(__name__, template_folder='../templates', static_folder="../static")
+app = Flask(__name__, template_folder='./templates', static_folder="./static")
 
 
 app.config["SESSION_PERMANENT"] = False
@@ -604,4 +604,4 @@ def google_signin():
 
 if __name__ == "__main__":
     port = int(os.getenv('PORT', 3000))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    app.run(host="0.0.0.0", port=port, debug=False)
