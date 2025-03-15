@@ -12,7 +12,6 @@ from functools import wraps
 from flask import redirect, session, request, current_app
 
 import os.path
-import sqlite3
 
 import tensorflow as tf
 from tensorflow.keras import models
