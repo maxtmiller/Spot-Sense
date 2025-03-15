@@ -49,32 +49,6 @@ def before_first_request(f):
     return decorated_function
 
 
-def run_sql(sql_file):
-    """Runs SQL Commands from a file"""
-    db_path = os.path.join(os.path.dirname(__file__), 'database.db')
-    try:
-        conn = sqlite3.connect(db_path)
-        cursor = conn.cursor()
-        with open(sql_file, 'r') as file:
-            sql_commands = file.read().split(';')
-        for command in sql_commands:
-            if command.strip():
-                cursor.execute(command)
-        conn.commit()
-    except sqlite3.Error as e:
-        print(f"SQL error: {e}")
-    finally:
-        conn.close()
-
-
-def check_for_sql(app):
-    """Ensures SQL structures exist"""
-    db_path = os.path.join(os.path.dirname(__file__), 'database.db')
-    if not app.config.get("BEFORE_CHECK_EXECUTED"):
-        if not os.path.exists(db_path):
-            run_sql('./schema.sql')
-        app.config["BEFORE_CHECK_EXECUTED"] = True
-
 # Clears local flask sessions
 def clear_session(app):
     """Clears Session and redirects to login page"""

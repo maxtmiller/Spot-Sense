@@ -32,7 +32,7 @@
                     <h1 class="navbar-brand" href="/" style="margin-left: 5px;">SpotSense</h1>
                 </a>
                 {% if session["user_id"] %}
-                    <ul class="nav navbar-nav" id="navTitle" style="display: none;">
+                    <ul class="nav navbar-nav" id="navTitle">
                         <li class="nav-item {% if request.path == '/' %}active{% endif %}" style="margin-right: 200px;"><a id="p1" class="nav-link" href="/#">Home</a></li>
                         <li class="nav-item {% if request.path == '/help' %}active{% endif %}" style="margin-right: 200px;"><a id="p1" class="nav-link" href="/help">Help</a></li>
                         <li class="nav-item {% if request.path == '/images' %}active{% endif %}" style="margin-right: 200px;"><a id="p1" class="nav-link" href="/images">History</a></li>

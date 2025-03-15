@@ -21,8 +21,7 @@
                 <a id="badEvent">{{error}}</a>
             {% endif %}
             <button class="fbtn btn-primary mx-auto loginButton msgSpace" type="submit">Log In</button>
-            <div id="g_id_onload" data-client_id="299971228917-ikndqg350u8tg9vv32gp60m72s3tnf84.apps.googleusercontent.com" data-callback="handleCredentialResponse"></div>
-            <div class="g_id_signin" data-type="standard"></div>
+            <button class="fbtn btn-primary mx-auto loginButton msgSpace" onclick="googleLogin()" type="button">Login with Google</button>
             <div class="loginSep mx-auto">
                 <hr id="line">
                 <div class="orDiv">
@@ -34,26 +33,43 @@
         </form>
         <br>
     </div>
-    <script src="https://accounts.google.com/gsi/client?lang=en" async defer></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="../static/js/firebase.js"></script>
     <script>
-        function handleCredentialResponse(response) {
-          if (response.credential) {
-            var id_token = response.credential;
-            event.preventDefault();
-            $.ajax({
-              type: 'POST',
-              url: '/google-signin',
-              data: { 'id_token': id_token },
-              beforeSend: function(xhr) {
-                  xhr.setRequestHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-              },
-              success: function (response) {
-                console.log(response);
-                window.location.href = "/"
-              }
+        async function loginWithEmailPassword() {
+          const email = document.getElementById("user").value;
+          const password = document.getElementById("password").value;
+      
+          try {
+            const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+            const idToken = await userCredential.user.getIdToken();  // 🔹 Get Firebase ID token
+      
+            // 🔹 Send ID token to Flask
+            const response = await fetch("/login", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ id_token: idToken })
             });
-            console.log("signIn Success");
+      
+            const data = await response.json();
+            if (response.ok) {
+              console.log("Login successful:", data);
+              window.location.href = "/";  // Redirect to home
+            } else {
+              console.error("Login failed:", data.error);
+              document.getElementById("badEvent").innerText = data.error;
+            }
+      
+          } catch (error) {
+            console.error("Error logging in:", error.message);
+            document.getElementById("badEvent").innerText = error.message;
           }
         }
-      </script>
+      
+        document.querySelector(".loginButton").addEventListener("click", function(event) {
+          event.preventDefault();
+          loginWithEmailPassword();
+        });
+    </script>      
 {% endblock %}

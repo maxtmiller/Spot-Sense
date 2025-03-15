@@ -1,4 +1,3 @@
-import requests
 import base64
 import os
 from io import BytesIO
@@ -8,15 +7,17 @@ from PIL import Image
 from dotenv import load_dotenv
 load_dotenv()
 
-import sqlite3
-from flask import Flask, flash, redirect, render_template, session, request, jsonify, send_file
+from flask import Flask, flash, redirect, render_template, session, request, jsonify
 from flask_session import Session
 
 from werkzeug.security import check_password_hash, generate_password_hash
-from helpers import login_required, before_first_request, check_for_sql, clear_session, generate_password, valid_email, classification_model, cohere_chat
+from helpers import login_required, before_first_request, clear_session, valid_email, classification_model, cohere_chat
 
 from google.oauth2 import id_token
 from google.auth.transport import requests
+
+import firebase_admin
+from firebase_admin import credentials, firestore, storage, auth
 
 
 app = Flask(__name__, template_folder='./templates', static_folder="./static")
@@ -26,14 +27,14 @@ app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
+cred_path = os.getenv("FIREBASE_CREDENTIALS_PATH")
+cred = credentials.Certificate(cred_path)
+firebase_admin.initialize_app(cred, {
+    "storageBucket": "spotsense-5af66.firebasestorage.app"
+})
 
-def get_db_connection():
-    """Create and return a new database connection."""
-    db_path = os.path.join(os.path.dirname(__file__), 'database.db')
-    conn = sqlite3.connect(db_path, check_same_thread=False)
-    conn.row_factory = sqlite3.Row
-
-    return conn
+db = firestore.client()
+bucket = storage.bucket()
 
 
 @app.after_request
@@ -59,63 +60,64 @@ def before_request():
     return
 
 
+@app.route("/firebase-config")
+def firebase_config():
+    """Serve Firebase credentials securely"""
+    
+    return jsonify({
+        "apiKey": os.getenv("FIREBASE_API_KEY"),
+        "authDomain": os.getenv("FIREBASE_AUTH_DOMAIN"),
+        "databaseURL": os.getenv("FIREBASE_DATABASE_URL"),
+        "projectId": os.getenv("FIREBASE_PROJECT_ID"),
+        "storageBucket": os.getenv("FIREBASE_STORAGE_BUCKET"),
+        "messagingSenderId": os.getenv("FIREBASE_MESSAGING_SENDER_ID"),
+        "appId": os.getenv("FIREBASE_APP_ID"),
+        "measurementId":  os.getenv("FIREBASE_MEASUREMENT_ID")
+    })
+
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    """Log user in"""
+    """Log user in using Firebase Authentication and Firestore"""
+    session.clear()  # Clear session
 
-    # Clear any user_id
-    session.clear()
-
-    conn = get_db_connection()
-    db = conn.cursor()
-
-    # User reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
+        id_token = request.json.get("id_token")  # Get token from frontend
 
-        # Variable for storing error message
-        error = None
+        if not id_token:
+            return jsonify({"error": "Missing ID token"}), 400
 
-        # Ensure username was submitted
-        if not request.form.get("user"):
-            error = "Must provide email or username!"
-            conn.close()
-            return render_template("login.html", error=error)
+        try:
+            # 🔹 Verify Firebase ID token
+            decoded_token = auth.verify_id_token(id_token)
+            user_id = decoded_token["uid"]
+            email = decoded_token.get("email")
 
-        # Ensure password was submitted
-        elif not request.form.get("password"):
-            error = "Must provide password!"
-            conn.close()
-            return render_template("login.html", error=error)
+            print(user_id, email)
 
-        # Query database for username
-        rows = db.execute("SELECT * FROM users WHERE username = ? OR email = ?", (request.form.get("user"), request.form.get("user"))).fetchall()
+            # 🔹 Get user from Firestore
+            user_ref = db.collection("users").document(user_id)
+            user_doc = user_ref.get()
 
-        # Ensure username exists and password is correct
-        if len(rows) != 1 or not check_password_hash(rows[0]["hash"], request.form.get("password")):
-            error = "Invalid username and/or password!"
-            conn.close()
-            return render_template("login.html", error=error)
+            if not user_doc.exists:
+                return jsonify({"error": "User not found in Firestore!"}), 404
 
-        # Remember which user has logged in
-        session["user_id"] = rows[0]["id"]
+            # 🔹 Store session
+            session["user_id"] = user_id
+            session["email"] = email
 
-        # Redirect user to home page
-        print("success")
-        conn.close()
-        return redirect("/")
+            return jsonify({"message": "Login successful"}), 200
 
-    # User reached route via GET (as by clicking a link or via redirect)
-    else:
-        conn.close()
-        return render_template("login.html")
+        except Exception as e:
+            print("Firebase Auth Error:", e)
+            return jsonify({"error": f"Authentication failed: {str(e)}"}), 401
+
+    return render_template("login.html")  # GET request
 
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
-    """Register user"""
-
-    conn = get_db_connection()
-    db = conn.cursor()
+    """Register user using Firebase Authentication and store details in Firestore"""
 
     if request.method == "POST":
 
@@ -124,77 +126,56 @@ def register():
         new_password = request.form.get("password")
         new_confirmation = request.form.get("confirmation")
 
-        existing_email = db.execute("SELECT * FROM users WHERE email = ?", (new_email,)).fetchall()
-        existing_username = db.execute("SELECT * FROM users WHERE username = ?", (new_username,)).fetchall()
-
         # Variable for storing error message
         error = None
 
-        # Ensure email was submitted
+        # Validate email format
         if not new_email:
             error = "Must provide email!"
-            conn.close()
-            return render_template("register.html", error=error)
-        
-        # Ensure email is not already registered to an account
-        elif len(existing_email) != 0:
-            error = "Account already exists with specified email!"
-            conn.close()
-            return render_template("register.html", error=error)
-        
-        # Ensure follows the correct format
         elif valid_email(new_email) == False:
             error = "Invalid email provided!"
-            conn.close()
-            return render_template("register.html", error=error)
-
-        # Ensure username is provided
+        # Validate username and password
         elif not new_username:
             error = "Must provide username!"
-            conn.close()
-            return render_template("register.html", error=error)
-
-        # Ensure username is unique
-        elif len(existing_username) != 0:
-            error = "Username not available!"
-            conn.close()
-            return render_template("register.html", error=error)
-
-        # Ensure password was submitted
         elif not new_password:
             error = "Missing password!"
-            conn.close()
-            return render_template("register.html", error=error)
-
-        # Ensure passwords match
         elif new_password != new_confirmation:
             error = "Passwords don't match!"
-            conn.close()
-            return render_template("register.html", error=error)
-
-        # Ensure password is between 4 and 15 characters
         elif len(new_password) < 4 or len(new_password) > 15:
             error = "Password must be between 4 and 15 characters long!"
-            conn.close()
+
+        # If there is any error, return the form with an error message
+        if error:
             return render_template("register.html", error=error)
 
-        # Hashes password when before inserting into users table
-        hash = generate_password_hash(new_password, method='pbkdf2', salt_length=16)
+        # Check if email already exists in Firebase Authentication
+        try:
+            user = auth.create_user(email=new_email, password=new_password)
+            print(f"User created: {user.uid}")
+        except firebase_admin.exceptions.FirebaseError as e:
+            error = f"Failed to create user: {str(e)}"
+            return render_template("register.html", error=error)
 
-        db.execute("INSERT INTO USERS (email, username, hash, auto_generated) VALUES(?, ?, ?, ?)", (new_email, new_username, hash, False))
-        conn.commit()
+        # Create user document in Firestore
+        try:
+            user_ref = db.collection("users").document(user.uid)
+            user_ref.set({
+                "email": new_email,
+                "username": new_username,
+                "user_id": user.uid,
+                "auto_generated": False
+            })
+            print(f"User {user.uid} added to Firestore")
+        except Exception as e:
+            error = f"Error storing user in Firestore: {str(e)}"
+            return render_template("register.html", error=error)
 
-        rows = db.execute("SELECT * FROM users WHERE username = ?", (request.form.get("username"),)).fetchall()
-
-        session["user_id"] = rows[0]["id"]
-
-        flash("Registered!")
-        conn.close()
+        # Store user data in session
+        session["user_id"] = user.uid
+        flash("Registered successfully!")
         return redirect("/")
 
-    else:
-        conn.close()
-        return render_template("register.html")
+    return render_template("register.html")
 
 
 @app.route("/logout")
@@ -212,15 +193,34 @@ def logout():
 @login_required
 def home():
     """Main Page"""
-
-    conn = get_db_connection()
-    db = conn.cursor()
-
     user_id = session["user_id"]
-    user = db.execute("SELECT * FROM users WHERE id = ?;", (user_id,)).fetchone()
 
-    conn.close()
-    return render_template("home.html", user=user)
+    try:
+        user_ref = db.collection("users").document(user_id)
+        user_doc = user_ref.get()
+
+        if not user_doc.exists:
+            return redirect("/login")
+
+        user = user_doc.to_dict()
+
+        return render_template("home.html", user=user)
+
+    except Exception as e:
+        print("Firestore Error:", e)
+        return redirect("/login")
+
+
+def upload_image(image_bytes, image_path):
+    """Uploads an image to Firebase Storage and returns the public URL"""
+
+    blob = bucket.blob(image_path)
+
+    blob.upload_from_string(image_bytes, content_type="image/png")
+
+    blob.make_public()
+
+    return blob.public_url  
 
 
 @app.route("/classify", methods=["POST"])
@@ -228,11 +228,7 @@ def home():
 def classify():
     """Classify Skin Cancer from Model"""
 
-    conn = get_db_connection()
-    db = conn.cursor()
-
     user_id = session["user_id"]
-    user = db.execute("SELECT * FROM users WHERE id = ?;", (user_id,)).fetchone()
 
     data = request.get_json()
     image_data = data.get("image")
@@ -247,11 +243,18 @@ def classify():
 
     vals = classification_model(img_byte_arr)
 
-    print(vals[1],type(vals[1]))
-    db.execute("INSERT INTO images (image, user_id, classification, accuracy) VALUES (?, ?, ?, ?)", (sqlite3.Binary(image_bytes),user_id,vals[0],str(vals[1])))
-    conn.commit()
+    image_path = f"images/{user_id}/{str(hash(image_data))}.png"
+    print(image_path)
+    image_url = upload_image(image_bytes, image_path)
 
-    conn.close()
+    result_data = {
+        "user_id": user_id,
+        "classification": vals[0],
+        "accuracy": str(vals[1]),
+        "image_url": image_url,
+    }
+
+    db.collection("images").add(result_data)
 
     if (vals[0]=="malignant"):
         flash("Skin likely Malignant!")
@@ -266,13 +269,11 @@ def classify():
 def help():
     """Help Page"""
 
-    conn = get_db_connection()
-    db = conn.cursor()
-
     user_id = session["user_id"]
-    user = db.execute("SELECT * FROM users WHERE id = ?;", (user_id,)).fetchone()
+    user_ref = db.collection("users").document(user_id)
+    user_doc = user_ref.get()
+    user = user_doc.to_dict()
 
-    conn.close()
     return render_template("help.html", user=user)
 
 
@@ -281,13 +282,11 @@ def help():
 def map():
     """Logic for finding nearby hospitals"""
 
-    conn = get_db_connection()
-    db = conn.cursor()
-
     user_id = session["user_id"]
-    user = db.execute("SELECT * FROM users WHERE id = ?;", (user_id,)).fetchone()
+    user_ref = db.collection("users").document(user_id)
+    user_doc = user_ref.get()
+    user = user_doc.to_dict()
 
-    conn.close()
     return render_template("map.html", user=user)
 
 
@@ -296,13 +295,11 @@ def map():
 def chatbot():
     """Logic for chatbot page"""
 
-    conn = get_db_connection()
-    db = conn.cursor()
-
     user_id = session["user_id"]
-    user = db.execute("SELECT * FROM users WHERE id = ?;", (user_id,)).fetchone()
+    user_ref = db.collection("users").document(user_id)
+    user_doc = user_ref.get()
+    user = user_doc.to_dict()
 
-    conn.close()
     return render_template("chatbot.html", user=user)
 
 
@@ -317,68 +314,35 @@ def chatbot_message():
     return jsonify({"response": bot_response})
 
 
-def get_image_from_db(image_id):
-    """Retrieve Image from Database"""
-
-    conn = get_db_connection()
-    db = conn.cursor()
-    
-    image_data = db.execute("SELECT image FROM images WHERE id = ?", (image_id,)).fetchone()
-    
-    if image_data:
-        conn.close()
-        return image_data[0]
-    conn.close()
-    return None
-
-
-@app.route('/view_image/<int:image_id>')
-@login_required
-def view_image(image_id):
-    """Fetch image data from the database"""
-
-    conn = get_db_connection()
-    db = conn.cursor()
-
-    user_id = session["user_id"]
-    user = db.execute("SELECT * FROM users WHERE id = ?;", (user_id,)).fetchone()
-
-    image_ids = db.execute("SELECT id FROM images WHERE user_id = ?", (user_id,)).fetchall()
-    image_ids = [image[0] for image in image_ids]
-
-    if image_id not in image_ids:
-        images_data = db.execute("SELECT id, classification, accuracy FROM images WHERE user_id = ?", (user_id,)).fetchall()
-        conn.close()
-        flash("Unauthorized Access!")
-        return render_template("images.html", images=images_data, user=user)
-
-    image_data = get_image_from_db(image_id)
-
-    if image_data:
-        conn.close()
-        return send_file(io.BytesIO(image_data), mimetype='image/png')
-    conn.close()
-    return "Image not found", 404
-
-
 @app.route("/images")
 @login_required
 def images():
     """Display Images"""
 
-    conn = get_db_connection()
-    db = conn.cursor()
-
     user_id = session["user_id"]
-    user = db.execute("SELECT * FROM users WHERE id = ?;", (user_id,)).fetchone()
     
-    # Fetch Image IDs
-    images_data = db.execute("SELECT id, classification, accuracy FROM images WHERE user_id = ?", (user_id,)).fetchall()
-    print(images)
+    user_ref = db.collection("users").document(user_id)
+    user_doc = user_ref.get()
+    user = user_doc.to_dict()
+
+    images_ref = db.collection("images")
+    images_query = images_ref.where("user_id", "==", user_id)
+    images_docs = images_query.stream()
+
+    images_data = []
+    for image_doc in images_docs:
+        image_data = image_doc.to_dict()
+        image_data["id"] = image_doc.id
+        
+        image_data["image_url"] = image_data.get("image_url")
+        
+        images_data.append(image_data)
     
-    conn.close()
+    print("\n")
+    print(images_data)
 
     return render_template("images.html", images=images_data, user=user)
+
 
 
 @app.route("/settings", methods=["GET", "POST"] )
@@ -537,71 +501,16 @@ def settings():
 def about():
     """About Page"""
 
-    conn = get_db_connection()
-    db = conn.cursor()
-
     user_id = session["user_id"]
-    user = db.execute("SELECT * FROM users WHERE id = ?;", (user_id,)).fetchone()
 
-    conn.close()
+    user_ref = db.collection("users").document(user_id)
+    user_doc = user_ref.get()
+    user = user_doc.to_dict()
+
+
     return render_template("about.html",  user=user)
-
-
-@app.route('/google-signin', methods=['POST'])
-def google_signin():
-    """Google Signin"""
-        
-    YOUR_CLIENT_ID = os.getenv('CLIENTID')
-
-    id_token_received = request.form['id_token']
-
-    conn = get_db_connection()
-    db = conn.cursor()
-
-    try:
-
-        idinfo = id_token.verify_oauth2_token(id_token_received, requests.Request(), YOUR_CLIENT_ID)
-
-        user_id = idinfo['sub']
-        user_name = idinfo['name']
-        user_email = idinfo['email']
-
-        email_count = db.execute("SELECT COUNT(email) FROM users WHERE email = ?;", (user_email,)).fetchone()
-        email_count = email_count[0]
-
-        if email_count != 1:
-
-            email = user_email
-            username = user_name
-            password = generate_password(12)
-            hash = generate_password_hash(password, method='pbkdf2', salt_length=16)
-
-            db.execute("INSERT INTO USERS (email, username, hash, auto_generated) VALUES(?, ?, ?, ?);", (email, username, hash, True))
-            conn.commit()
-
-            rows = db.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchall()
-
-            print("rows - ", rows)
-
-            session["user_id"] = rows[0]["id"]
-
-        else:
-
-            email = user_email
-
-            rows = db.execute("SELECT * FROM users WHERE email = ?;", (email,)).fetchall()
-
-            session["user_id"] = rows[0]["id"]
-
-        conn.close()
-        return jsonify(success=True)
-
-    except ValueError:
-        print('Invalid token')
-        conn.close()
-        return jsonify(success=False, error='Invalid token')
 
 
 if __name__ == "__main__":
     port = int(os.getenv('PORT', 3000))
-    app.run(host="0.0.0.0", port=port, debug=False)
+    app.run(host="0.0.0.0", port=port, debug=True)

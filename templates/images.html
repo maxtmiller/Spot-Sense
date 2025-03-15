@@ -9,8 +9,8 @@
     <div class="image-gallery">
         {% for image in images %}
             <div class="image-item">
-                <a href="{{ url_for('view_image', image_id=image['id']) }}">
-                    <img class="image" src="{{ url_for('view_image', image_id=image['id']) }}" alt="Image {{ image['id'] }}" />
+                <a href="{{ image['image_url'] }}">
+                    <img class="image" src="{{ image['image_url'] }}" alt="Image {{ image['id'] }}" />
                     <label style="width:100%;background:white;color:black;">{{image['classification']}} - {{image['accuracy']}}%</label>
                 </a>
             </div>
