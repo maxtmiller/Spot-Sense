@@ -11,7 +11,7 @@ from flask import Flask, flash, redirect, render_template, session, request, jso
 from flask_session import Session
 
 from werkzeug.security import check_password_hash, generate_password_hash
-from api.helpers import login_required, before_first_request, clear_session, valid_email, classification_model, cohere_chat
+from helpers import login_required, before_first_request, clear_session, valid_email, classification_model, cohere_chat
 
 from google.oauth2 import id_token
 from google.auth.transport import requests
@@ -20,7 +20,7 @@ import firebase_admin
 from firebase_admin import credentials, firestore, storage, auth
 
 
-app = Flask(__name__, template_folder='../templates', static_folder="../static")
+app = Flask(__name__)
 
 
 app.config["SESSION_PERMANENT"] = False
