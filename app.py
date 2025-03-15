@@ -7,11 +7,10 @@ from PIL import Image
 from dotenv import load_dotenv
 load_dotenv()
 
-from flask import Flask, flash, redirect, render_template, session, request, jsonify
+from flask import Flask, flash, redirect, render_template, request, jsonify, session
 from flask_session import Session
 
-from werkzeug.security import check_password_hash, generate_password_hash
-from helpers import login_required, before_first_request, clear_session, valid_email, classification_model, cohere_chat, upload_image
+from helpers import login_required, valid_email, classification_model, cohere_chat, upload_image
 
 from google.oauth2 import id_token
 from google.auth.transport import requests

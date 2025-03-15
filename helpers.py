@@ -48,7 +48,6 @@ def before_first_request(f):
     return decorated_function
 
 
-# Clears local flask sessions
 def clear_session(app):
     """Clears Session and redirects to login page"""
 
@@ -120,7 +119,7 @@ def upload_image(image_bytes, image_path, bucket):
     blob.make_public()
 
     return blob.public_url 
-    
+
 
 def download_model(LOCAL_MODEL_PATH, MODEL_URL):
     if not os.path.exists(LOCAL_MODEL_PATH):
