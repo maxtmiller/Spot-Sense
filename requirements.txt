@@ -8,4 +8,5 @@ werkzeug
 flask-cors
 gunicorn
 requests
-tensorflow-cpu
+tensorflow
+cohere
