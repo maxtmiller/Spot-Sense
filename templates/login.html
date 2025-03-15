@@ -21,7 +21,11 @@
                 <a id="badEvent">{{error}}</a>
             {% endif %}
             <button class="fbtn btn-primary mx-auto loginButton msgSpace" type="submit">Log In</button>
-            <button class="fbtn btn-primary mx-auto loginButton msgSpace" onclick="googleLogin()" type="button">Login with Google</button>
+            <div style="position: relative;">
+              <button style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; z-index: 1000; border: 0; padding: 0;" onclick="googleLogin()" type="button"></button>
+              <div id="g_id_onload"></div>
+              <div class="g_id_signin" onclick="googleLogin()" data-type="standard"></div>
+            </div>
             <div class="loginSep mx-auto">
                 <hr id="line">
                 <div class="orDiv">
@@ -35,6 +39,7 @@
     </div>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://accounts.google.com/gsi/client?lang=en" async defer></script>
     <script src="../static/js/firebase.js"></script>
     <script>
         async function loginWithEmailPassword() {
