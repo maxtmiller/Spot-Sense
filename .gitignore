@@ -2,7 +2,4 @@
 __pycache__
 .env
 .vercel
-classification_model
-Image_Tests
-vercel.json
 static/spotsense-5af66-firebase-adminsdk-fbsvc-af8e33696e.json
