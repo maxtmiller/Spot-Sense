@@ -2,7 +2,7 @@ import os
 import secrets
 import string
 import re
-import cohere
+# import cohere
 import requests
 
 from dotenv import load_dotenv
@@ -73,40 +73,40 @@ def valid_email(email):
     return re.match(emailRegex, email) is not None
 
 
-def cohere_chat(user_message):
-    try:
-        # Load API key from a JSON file
-        API = os.getenv("COHEREAPIKEY")
+# def cohere_chat(user_message):
+#     try:
+#         # Load API key from a JSON file
+#         API = os.getenv("COHEREAPIKEY")
 
-        # Initialize Cohere API client
-        co = cohere.ClientV2(api_key=API)
+#         # Initialize Cohere API client
+#         co = cohere.ClientV2(api_key=API)
 
-        # Define the system message context
-        system_message = """## Task and Context
-        You are a medical professional providing advice to someone who might have skin cancer.
+#         # Define the system message context
+#         system_message = """## Task and Context
+#         You are a medical professional providing advice to someone who might have skin cancer.
 
-        ## Style Guide
-        Respond in short, clear, and concise sentences. Provide only the necessary information and avoid over-explaining."""
+#         ## Style Guide
+#         Respond in short, clear, and concise sentences. Provide only the necessary information and avoid over-explaining."""
 
-        # Construct the list of messages
-        messages = [
-            {"role": "system", "content": system_message},
-            {"role": "user", "content": user_message},
-        ]
+#         # Construct the list of messages
+#         messages = [
+#             {"role": "system", "content": system_message},
+#             {"role": "user", "content": user_message},
+#         ]
 
-        # Generate the response from Cohere's API
-        response = co.chat(model="command-r-plus-08-2024", messages=messages)
+#         # Generate the response from Cohere's API
+#         response = co.chat(model="command-r-plus-08-2024", messages=messages)
 
-        # Extract the assistant's response
-        assistant_message = response.message.content[0].text
-        messages.append({"role": "assistant", "content": assistant_message})
+#         # Extract the assistant's response
+#         assistant_message = response.message.content[0].text
+#         messages.append({"role": "assistant", "content": assistant_message})
 
-        # print(assistant_message)  # Log the response (optional)
+#         # print(assistant_message)  # Log the response (optional)
 
-        return assistant_message
-    except Exception as e:
-        print(f"Error occurred: {e}")
-        return "Sorry, there was an issue processing your message."
+#         return assistant_message
+#     except Exception as e:
+#         print(f"Error occurred: {e}")
+#         return "Sorry, there was an issue processing your message."
 
 
 def upload_image(image_bytes, image_path, bucket):

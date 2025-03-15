@@ -11,7 +11,7 @@ from flask import Flask, flash, redirect, render_template, request, jsonify, ses
 from flask_session import Session
 from flask_cors import CORS
 
-from helpers import login_required, before_first_request, clear_session, valid_email, classification_model, cohere_chat, upload_image
+from helpers import login_required, before_first_request, clear_session, valid_email, classification_model, upload_image
 
 import firebase_admin
 from firebase_admin import credentials, firestore, storage, auth
