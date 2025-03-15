@@ -6,7 +6,7 @@ google-auth
 google-auth-oauthlib
 gunicorn
 numpy
-pillow=
+pillow
 python-dotenv
 werkzeug
 flask-cors

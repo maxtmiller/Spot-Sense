@@ -1,11 +1,191 @@
-from flask import Flask, render_template
+import base64
+import os
+from io import BytesIO
+import io
+from PIL import Image
+
+from dotenv import load_dotenv
+load_dotenv()
+
+from flask import Flask, flash, redirect, render_template, request, jsonify, session
+from flask_session import Session
+from flask_cors import CORS
+
+from helpers import login_required, before_first_request, clear_session, valid_email, classification_model, cohere_chat, upload_image
+
+import firebase_admin
+from firebase_admin import credentials, firestore, storage, auth
+
 
 app = Flask(__name__)
+app.secret_key = os.getenv("SECRET_KEY")
+CORS(app)
+
+
+cred_path = os.getenv("FIREBASE_CREDENTIALS_PATH")
+cred = credentials.Certificate(cred_path)
+firebase_admin.initialize_app(cred, {
+    "storageBucket": os.getenv("FIREBASE_STORAGE_BUCKET")
+})
+
+db = firestore.client()
+bucket = storage.bucket()
+
+
+@app.after_request
+def after_request(response):
+    """Ensure responses aren't cached"""
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Expires"] = 0
+    response.headers["Pragma"] = "no-cache"
+    return response
+
+
+@app.before_request
+@before_first_request
+def before_request():
+    """Clear Session"""
+
+    # Calls function to redirect to login page only on app start
+    clear_session(app)
+
+    return
+
+
+@app.route("/firebase-config")
+def firebase_config():
+    """Serve Firebase credentials securely"""
+    
+    return jsonify({
+        "apiKey": os.getenv("FIREBASE_API_KEY"),
+        "authDomain": os.getenv("FIREBASE_AUTH_DOMAIN"),
+        "databaseURL": os.getenv("FIREBASE_DATABASE_URL"),
+        "projectId": os.getenv("FIREBASE_PROJECT_ID"),
+        "storageBucket": os.getenv("FIREBASE_STORAGE_BUCKET"),
+        "messagingSenderId": os.getenv("FIREBASE_MESSAGING_SENDER_ID"),
+        "appId": os.getenv("FIREBASE_APP_ID"),
+        "measurementId":  os.getenv("FIREBASE_MEASUREMENT_ID")
+    })
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    """Log user in using Firebase Authentication and Firestore"""
+    session.clear()
+
+    if request.method == "POST":
+        id_token = request.json.get("id_token")
+
+        if not id_token:
+            return jsonify({"error": "Missing ID token"}), 400
+
+        try:
+            decoded_token = auth.verify_id_token(id_token)
+            user_id = decoded_token["uid"]
+            email = decoded_token.get("email")
+
+            user_ref = db.collection("users").document(user_id)
+            user_doc = user_ref.get()
+
+            if not user_doc.exists:
+                return jsonify({"error": "User not found in Firestore!"}), 404
+
+            session["user_id"] = user_id
+            session["email"] = email
+
+            return jsonify({"message": "Login successful"}), 200
+
+        except Exception as e:
+            print("Firebase Auth Error:", e)
+            return jsonify({"error": f"Authentication failed: {str(e)}"}), 401
+
+    return render_template("login.html")
+
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    """Register user using Firebase Authentication and store details in Firestore"""
+
+    if request.method == "POST":
+
+        new_email = request.form.get("email")
+        new_username = request.form.get("username")
+        new_password = request.form.get("password")
+        new_confirmation = request.form.get("confirmation")
+
+        error = None
+
+        if not new_email:
+            error = "Must provide email!"
+        elif valid_email(new_email) == False:
+            error = "Invalid email provided!"
+        elif not new_username:
+            error = "Must provide username!"
+        elif not new_password:
+            error = "Missing password!"
+        elif new_password != new_confirmation:
+            error = "Passwords don't match!"
+        elif len(new_password) < 4 or len(new_password) > 15:
+            error = "Password must be between 4 and 15 characters long!"
+
+        if error:
+            return render_template("register.html", error=error)
+
+        try:
+            user = auth.create_user(email=new_email, password=new_password)
+            print(f"User created: {user.uid}")
+        except firebase_admin.exceptions.FirebaseError as e:
+            error = f"Failed to create user: {str(e)}"
+            return render_template("register.html", error=error)
+
+        try:
+            user_ref = db.collection("users").document(user.uid)
+            user_ref.set({
+                "email": new_email,
+                "username": new_username,
+                "user_id": user.uid,
+                "auto_generated": False
+            })
+            print(f"User {user.uid} added to Firestore")
+        except Exception as e:
+            error = f"Error storing user in Firestore: {str(e)}"
+            return render_template("register.html", error=error)
+
+        session["user_id"] = user.uid
+        flash("Registered successfully!")
+        return redirect("/")
+
+    return render_template("register.html")
+
+
+@app.route("/logout")
+def logout():
+    """Log user out"""
+
+    # Forget any user_id
+    session.clear()
+
+    # Redirect user to login form
+    return redirect("/login")
+
 
 @app.route("/")
+@login_required
 def home():
-    return render_template("home.html")
+    """Main Page"""
+    user_id = session["user_id"]
 
+    try:
+        user_ref = db.collection("users").document(user_id)
+        user_doc = user_ref.get()
 
-if __name__ == "__main__":
-    app.run()
+        if not user_doc.exists:
+            return redirect("/login")
+
+        user = user_doc.to_dict()
+
+        return render_template("home.html", user=user)
+
+    except Exception as e:
+        print("Firestore Error:", e)
+        return redirect("/login") 
