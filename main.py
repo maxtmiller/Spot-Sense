@@ -162,10 +162,8 @@ def register():
 def logout():
     """Log user out"""
 
-    # Forget any user_id
     session.clear()
 
-    # Redirect user to login form
     return redirect("/login")
 
 
@@ -189,3 +187,7 @@ def home():
     except Exception as e:
         print("Firestore Error:", e)
         return redirect("/login") 
+
+
+if __name__ == "__main__":
+    app.run()

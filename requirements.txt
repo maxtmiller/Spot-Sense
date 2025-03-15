@@ -2,8 +2,6 @@ cohere
 firebase-admin
 Flask
 Flask-Session
-google-auth
-google-auth-oauthlib
 gunicorn
 numpy
 pillow
