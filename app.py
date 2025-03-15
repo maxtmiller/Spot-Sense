@@ -9,8 +9,9 @@ load_dotenv()
 
 from flask import Flask, flash, redirect, render_template, request, jsonify, session
 from flask_session import Session
+from flask_cors import CORS
 
-from helpers import login_required, valid_email, classification_model, cohere_chat, upload_image
+from helpers import login_required, before_first_request, clear_session, valid_email, classification_model, cohere_chat, upload_image
 
 from google.oauth2 import id_token
 from google.auth.transport import requests
@@ -21,16 +22,37 @@ from firebase_admin import credentials, firestore, storage, auth
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY")
+CORS(app)
 
 
 cred_path = os.getenv("FIREBASE_CREDENTIALS_PATH")
 cred = credentials.Certificate(cred_path)
 firebase_admin.initialize_app(cred, {
-    "storageBucket": "spotsense-5af66.firebasestorage.app"
+    "storageBucket": os.getenv("FIREBASE_STORAGE_BUCKET")
 })
 
 db = firestore.client()
 bucket = storage.bucket()
+
+
+@app.after_request
+def after_request(response):
+    """Ensure responses aren't cached"""
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Expires"] = 0
+    response.headers["Pragma"] = "no-cache"
+    return response
+
+
+@app.before_request
+@before_first_request
+def before_request():
+    """Clear Session"""
+
+    # Calls function to redirect to login page only on app start
+    clear_session(app)
+
+    return
 
 
 @app.route("/firebase-config")
