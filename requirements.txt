@@ -1,10 +1,10 @@
-cohere==5.14.0
-Flask==3.1.0
-Flask-Session==0.8.0
-google-auth==2.38.0
-numpy==2.1.3
-pillow==11.1.0
-python-dotenv==1.0.1
+cohere
+Flask
+Flask-Session
+google-auth
+numpy
+pillow
+python-dotenv
 tensorflow
 Werkzeug
 gunicorn
