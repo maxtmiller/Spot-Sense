@@ -6,3 +6,4 @@ pillow
 python-dotenv
 werkzeug
 flask-cors
+gunicorn
