@@ -51,10 +51,6 @@ def after_request(response):
 def before_request():
     """Clear Session"""
 
-    # Checks if college list is populated
-    check_for_sql(app)
-
-    # Calls function to redirect to login page only on app start
     clear_session(app)
 
     return
@@ -210,7 +206,7 @@ def home():
         print("Firestore Error:", e)
         return redirect("/login")
 
-
+@login_required
 def upload_image(image_bytes, image_path):
     """Uploads an image to Firebase Storage and returns the public URL"""
 
@@ -342,7 +338,6 @@ def images():
     print(images_data)
 
     return render_template("images.html", images=images_data, user=user)
-
 
 
 @app.route("/settings", methods=["GET", "POST"] )
@@ -513,4 +508,4 @@ def about():
 
 if __name__ == "__main__":
     port = int(os.getenv('PORT', 3000))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    app.run(host="0.0.0.0", port=port, debug=False)
