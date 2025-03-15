@@ -7,4 +7,3 @@ python-dotenv
 werkzeug
 flask-cors
 gunicorn
-tensorflow-cpu
