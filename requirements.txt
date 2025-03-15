@@ -8,4 +8,4 @@ werkzeug
 flask-cors
 gunicorn
 requests
-tensorflow-lite
+tensorflow-cpu
