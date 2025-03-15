@@ -3,6 +3,7 @@ import os
 from io import BytesIO
 import io
 from PIL import Image
+import requests
 
 from dotenv import load_dotenv
 load_dotenv()

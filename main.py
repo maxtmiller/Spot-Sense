@@ -11,7 +11,7 @@ from flask import Flask, flash, redirect, render_template, request, jsonify, ses
 from flask_session import Session
 from flask_cors import CORS
 
-from helpers import login_required, before_first_request, clear_session, valid_email, classification_model, cohere_chat, upload_image
+from helpers import login_required, before_first_request, clear_session, valid_email, classification_model, upload_image
 
 import firebase_admin
 from firebase_admin import credentials, firestore, storage, auth
@@ -274,12 +274,26 @@ def chatbot():
 @app.route("/chatbot/message", methods=["POST"])
 @login_required
 def chatbot_message():
+    try:
+        user_message = request.json["message"]
 
-    user_message = request.json["message"]
+        api_url = "https://geesehacks.onrender.com/cohere-chat-ss"
 
-    bot_response = cohere_chat(user_message)
+        payload = {
+            "userMessage": user_message
+        }
 
-    return jsonify({"response": bot_response})
+        response = requests.post(api_url, json=payload)
+
+        if response.status_code == 200:
+            bot_response = response.json().get("responseMessage")
+        else:
+            bot_response = "Sorry, there was an issue with the external API."
+
+        return jsonify({"response": bot_response})
+
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
 
 @app.route("/images")
