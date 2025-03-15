@@ -75,30 +75,25 @@ def firebase_config():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     """Log user in using Firebase Authentication and Firestore"""
-    session.clear()  # Clear session
+    session.clear()
 
     if request.method == "POST":
-        id_token = request.json.get("id_token")  # Get token from frontend
+        id_token = request.json.get("id_token")
 
         if not id_token:
             return jsonify({"error": "Missing ID token"}), 400
 
         try:
-            # 🔹 Verify Firebase ID token
             decoded_token = auth.verify_id_token(id_token)
             user_id = decoded_token["uid"]
             email = decoded_token.get("email")
 
-            print(user_id, email)
-
-            # 🔹 Get user from Firestore
             user_ref = db.collection("users").document(user_id)
             user_doc = user_ref.get()
 
             if not user_doc.exists:
                 return jsonify({"error": "User not found in Firestore!"}), 404
 
-            # 🔹 Store session
             session["user_id"] = user_id
             session["email"] = email
 
@@ -108,7 +103,7 @@ def login():
             print("Firebase Auth Error:", e)
             return jsonify({"error": f"Authentication failed: {str(e)}"}), 401
 
-    return render_template("login.html")  # GET request
+    return render_template("login.html")
 
 
 @app.route("/register", methods=["GET", "POST"])
@@ -122,15 +117,12 @@ def register():
         new_password = request.form.get("password")
         new_confirmation = request.form.get("confirmation")
 
-        # Variable for storing error message
         error = None
 
-        # Validate email format
         if not new_email:
             error = "Must provide email!"
         elif valid_email(new_email) == False:
             error = "Invalid email provided!"
-        # Validate username and password
         elif not new_username:
             error = "Must provide username!"
         elif not new_password:
@@ -140,11 +132,9 @@ def register():
         elif len(new_password) < 4 or len(new_password) > 15:
             error = "Password must be between 4 and 15 characters long!"
 
-        # If there is any error, return the form with an error message
         if error:
             return render_template("register.html", error=error)
 
-        # Check if email already exists in Firebase Authentication
         try:
             user = auth.create_user(email=new_email, password=new_password)
             print(f"User created: {user.uid}")
@@ -152,7 +142,6 @@ def register():
             error = f"Failed to create user: {str(e)}"
             return render_template("register.html", error=error)
 
-        # Create user document in Firestore
         try:
             user_ref = db.collection("users").document(user.uid)
             user_ref.set({
@@ -166,7 +155,6 @@ def register():
             error = f"Error storing user in Firestore: {str(e)}"
             return render_template("register.html", error=error)
 
-        # Store user data in session
         session["user_id"] = user.uid
         flash("Registered successfully!")
         return redirect("/")
@@ -240,7 +228,7 @@ def classify():
     vals = classification_model(img_byte_arr)
 
     image_path = f"images/{user_id}/{str(hash(image_data))}.png"
-    print(image_path)
+
     image_url = upload_image(image_bytes, image_path)
 
     result_data = {
@@ -333,9 +321,6 @@ def images():
         image_data["image_url"] = image_data.get("image_url")
         
         images_data.append(image_data)
-    
-    print("\n")
-    print(images_data)
 
     return render_template("images.html", images=images_data, user=user)
 
@@ -345,150 +330,13 @@ def images():
 def settings():
     """Settings Page"""
 
-    conn = get_db_connection()
-    db = conn.cursor()
-
     user_id = session["user_id"]
-    user = db.execute("SELECT * FROM users WHERE id = ?;", (user_id,)).fetchone()
-
-    generated = user['auto_generated']
-
-    if request.method == "POST":
-
-        error = None
-        success = None
-
-        new_username = request.form.get("username")
-        new_email = request.form.get("email")
-        display = request.form.get("display")
-       
-        if generated:
-            set_password = request.form.get("set-password")
-        else:
-            new_password = request.form.get("new-password")
-            current_password = request.form.get("current-password")
-
-        existing_usernames = db.execute("SELECT * FROM users WHERE username = ? AND NOT id = ?", (new_username, user['id']))
-        existing_emails = db.execute("SELECT * FROM users WHERE email = ? AND NOT id = ?", (new_email, user['id']))
-
-        hash = db.execute("SELECT hash FROM users WHERE id = ?", user['id'])[0]['hash']
-
-        if not new_username or not new_email:
-            error = "Must fill all fields!"
-            conn.close()
-            return render_template("settings.html",  user=user, error=error)
-        
-        elif len(existing_usernames) != 0:
-            error = "Username already taken!"
-            conn.close()
-            return render_template("settings.html",  user=user, error=error)
-
-        elif len(existing_emails) != 0:
-            error = "Account already exists for specified email!"
-            conn.close()
-            return render_template("settings.html",  user=user, error=error)
-
-        elif valid_email(new_email) == False:
-            error = "Invalid email provided!"
-            conn.close()
-            return render_template("settings.html",  user=user, error=error)
-
-        elif generated:
-
-            if len(set_password) < 4 or len(set_password) > 15:
-                error = "Password must be between 4 and 15 characters long!"
-                conn.close()
-                return render_template("settings.html",  user=user, error=error)
-
-        elif not generated:
-
-            if not current_password:
-                error = "Current password not provided!"
-                conn.close()
-                return render_template("settings.html",  user=user, error=error)
-            
-            elif not check_password_hash(hash, current_password):
-                error = "Current password incorrect!"
-                conn.close()
-                return render_template("settings.html",  user=user, error=error)
-
-            elif display == "flex":
-
-                if new_username == user['username'] and new_email == user['email'] and check_password_hash(hash, current_password) and (not new_password or new_password == current_password):
-                    error = "Account Details have not changed!"
-                    print("all")
-                    conn.close()
-                    return render_template("settings.html",  user=user, error=error)
-                
-                elif not new_password:
-                    error = "New password not set!"
-                    conn.close()
-                    return render_template("settings.html",  user=user, error=error)
-                
-                elif len(new_password) < 4 or len(new_password) > 15:
-                    error = "New password must be between 4 and 15 characters long!"
-                    conn.close()
-                    return render_template("settings.html",  user=user, error=error)
-
-        if generated:
-
-            if new_username == user['username'] and new_email != user['email']:
-                db.execute("UPDATE users SET email = ? WHERE id = ?;", new_email, user['id'])
-                success = "Email succesfully updated!"
-                conn.close()
-                return render_template("settings.html",  user=user, success=success)
-            
-            elif new_username != user['username'] and new_email == user['email']:
-                db.execute("UPDATE users SET username = ? WHERE id = ?;", new_username, user['id'])
-                success = "Username succesfully updated!"
-                conn.close()
-                return render_template("settings.html",  user=user, success=success)
-            
-            else:
-                hash = generate_password_hash(set_password, method='pbkdf2', salt_length=16)
-                db.execute("UPDATE users SET hash = ?;", hash)
-                db.execute("UPDATE users SET auto_generated = ?;", False)
-                success = "Password succesfully set!"
-                conn.close()
-                return render_template("settings.html",  user=user, success=success)
-
-        elif not generated:
-
-            if new_username == user['username'] and new_email != user['email'] and check_password_hash(hash, current_password) and display == "none":
-                db.execute("UPDATE users SET email = ? WHERE id = ?;", new_email, user['id'])
-                success = "Email succesfully updated!"
-                conn.close()
-                return render_template("settings.html",  user=user, success=success)
-            
-            elif new_username != user['username'] and new_email == user['email'] and check_password_hash(hash, current_password) and display == "none":
-                db.execute("UPDATE users SET username = ? WHERE id = ?;", new_username, user['id'])
-                success = "Username succesfully updated!"
-                conn.close()
-                return render_template("settings.html",  user=user, success=success)
-            
-            elif new_username != user['username'] and new_email != user['email'] and check_password_hash(hash, current_password) and display == "none":
-                db.execute("UPDATE users SET username = ?, email = ? WHERE id = ?;", new_username, new_email, user['id'])
-                success = "Email & Username succesfully updated!"
-                conn.close()
-                return render_template("settings.html",  user=user, success=success)
-            
-            elif new_username == user['username'] and new_email == user['email'] and new_password != current_password and check_password_hash(hash, current_password) and new_password and display == "flex":
-                hash = generate_password_hash(new_password, method='pbkdf2', salt_length=16)
-                db.execute("UPDATE users SET hash = ?;", hash)
-                success = "Password succesfully updated!"
-                conn.close()
-                return render_template("settings.html",  user=user, success=success)
-            
-            else:
-                error = "Password must be updated alone!"
-                conn.close()
-                return render_template("settings.html",  user=user, error=error)
-
-        conn.close()
-        return render_template("settings.html",  user=user)
-
-    conn.close()
-    return render_template("settings.html",  user=user, generated=generated)
+    
+    user_ref = db.collection("users").document(user_id)
+    user_doc = user_ref.get()
+    user = user_doc.to_dict()
+    
+    return render_template("settings.html",  user=user)
 
 
 @app.route("/about")
