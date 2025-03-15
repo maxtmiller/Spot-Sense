@@ -110,6 +110,18 @@ def cohere_chat(user_message):
         return "Sorry, there was an issue processing your message."
 
 
+def upload_image(image_bytes, image_path, bucket):
+    """Uploads an image to Firebase Storage and returns the public URL"""
+
+    blob = bucket.blob(image_path)
+
+    blob.upload_from_string(image_bytes, content_type="image/png")
+
+    blob.make_public()
+
+    return blob.public_url 
+    
+
 def download_model(LOCAL_MODEL_PATH, MODEL_URL):
     if not os.path.exists(LOCAL_MODEL_PATH):
         print(f"Downloading model from {MODEL_URL}...")

@@ -11,7 +11,7 @@ from flask import Flask, flash, redirect, render_template, session, request, jso
 from flask_session import Session
 
 from werkzeug.security import check_password_hash, generate_password_hash
-from helpers import login_required, before_first_request, clear_session, valid_email, classification_model, cohere_chat
+from helpers import login_required, before_first_request, clear_session, valid_email, classification_model, cohere_chat, upload_image
 
 from google.oauth2 import id_token
 from google.auth.transport import requests
@@ -21,11 +21,8 @@ from firebase_admin import credentials, firestore, storage, auth
 
 
 app = Flask(__name__)
+app.secret_key = os.getenv("SECRET_KEY")
 
-
-app.config["SESSION_PERMANENT"] = False
-app.config["SESSION_TYPE"] = "filesystem"
-Session(app)
 
 cred_path = os.getenv("FIREBASE_CREDENTIALS_PATH")
 cred = credentials.Certificate(cred_path)
@@ -35,25 +32,6 @@ firebase_admin.initialize_app(cred, {
 
 db = firestore.client()
 bucket = storage.bucket()
-
-
-@app.after_request
-def after_request(response):
-    """Ensure responses aren't cached"""
-    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-    response.headers["Expires"] = 0
-    response.headers["Pragma"] = "no-cache"
-    return response
-
-
-@app.before_request
-@before_first_request
-def before_request():
-    """Clear Session"""
-
-    clear_session(app)
-
-    return
 
 
 @app.route("/firebase-config")
@@ -192,19 +170,7 @@ def home():
 
     except Exception as e:
         print("Firestore Error:", e)
-        return redirect("/login")
-
-@login_required
-def upload_image(image_bytes, image_path):
-    """Uploads an image to Firebase Storage and returns the public URL"""
-
-    blob = bucket.blob(image_path)
-
-    blob.upload_from_string(image_bytes, content_type="image/png")
-
-    blob.make_public()
-
-    return blob.public_url  
+        return redirect("/login") 
 
 
 @app.route("/classify", methods=["POST"])
@@ -229,7 +195,7 @@ def classify():
 
     image_path = f"images/{user_id}/{str(hash(image_data))}.png"
 
-    image_url = upload_image(image_bytes, image_path)
+    image_url = upload_image(image_bytes, image_path, bucket)
 
     result_data = {
         "user_id": user_id,
@@ -355,6 +321,4 @@ def about():
 
 
 if __name__ == "__main__":
-    # port = int(os.getenv('PORT', 3000))
-    # app.run(host="0.0.0.0", port=port, debug=False)
     app.run()
