@@ -7,7 +7,7 @@
 
 ---
 
-## Demo
+## Preview
 
 <img width="1710" height="947" alt="spotsense_cover" src="https://github.com/user-attachments/assets/3d76431d-1b9f-4e57-b28a-c5eb91d0382c" />
 
