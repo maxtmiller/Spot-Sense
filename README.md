@@ -31,11 +31,11 @@
 
 ---
 
-## Installation
+## Local Setup
 
 ```bash
-git clone https://github.com/yourusername/spotsense.git
-cd spotsense
+git clone https://github.com/maxtmiller/Spot-Sense.git
+cd Spot-Sense
 pip install -r requirements.txt
 python app.py
 ```
