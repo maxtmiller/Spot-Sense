@@ -34,8 +34,8 @@
 ## Local Setup
 
 ```bash
-git clone https://github.com/maxtmiller/Spot-Sense.git
-cd Spot-Sense
+git clone https://github.com/maxtmiller/SpotSense.git
+cd SpotSense
 pip install -r requirements.txt
 python app.py
 ```
